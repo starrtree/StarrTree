@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cosmic Energy Canvas</title>
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -17,6 +17,7 @@
             background-color: #000; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #fff;
+            touch-action: none; 
         }
         canvas { 
             display: block; 
@@ -29,12 +30,32 @@
         canvas:active {
             cursor: grabbing;
         }
+        
+        #exitPlanetViewButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 101; 
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+         #exitPlanetViewButton.visible {
+             opacity: 1;
+             visibility: visible;
+         }
 
-        /* --- Modal --- */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center;
-            z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s ease; backdrop-filter: blur(5px);
+            z-index: 300; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s ease; backdrop-filter: blur(5px);
         }
         .modal.active { opacity: 1; visibility: visible; }
         .modal-content {
@@ -45,7 +66,7 @@
             max-width: 90vw;
             max-height: 90vw;
             border-radius: 50%;
-            padding: 40px;
+            padding: 30px;
             box-sizing: border-box;
             color: #eee;
             box-shadow: 0 0 40px var(--gold-color), inset 0 0 15px rgba(255, 195, 0, 0.3);
@@ -59,33 +80,20 @@
             text-align: center;
         }
         .modal.active .modal-content { transform: scale(1) rotate(0deg); }
-        .modal-content h2 { 
-            margin-top: 0; 
-            margin-bottom: 20px;
-            font-size: 2.5rem;
-            color: var(--gold-color); 
-            transition: color 0.3s ease; 
-        }
-        .modal-content p {
-            margin: 0;
-            font-size: 16px;
-            line-height: 1.6;
-        }
+        .modal-content h2 { margin-top: 0; margin-bottom: 15px; font-size: 1.8rem; color: var(--gold-color); }
+        .modal-content p { margin: 0; font-size: 14px; line-height: 1.5; }
         .modal-close {
             position: absolute;
-            top: 22%;
-            right: 22%;
-            transform: translate(50%, -50%);
-            font-size: 32px;
-            font-weight: bold;
-            color: #fff; cursor: pointer; transition: color 0.2s, transform 0.2s;
+            top: 20%; right: 20%; transform: translate(50%, -50%);
+            font-size: 32px; font-weight: bold; color: #fff; cursor: pointer; transition: color 0.2s, transform 0.2s;
         }
         .modal-close:hover { color: #ffc300; transform: translate(50%, -50%) scale(1.2); }
-        
     </style>
 </head>
 <body>
     <canvas id="cosmicCanvas"></canvas>
+    
+    <button id="exitPlanetViewButton">Back to Overview</button>
 
     <div class="modal" id="serviceModal">
         <div class="modal-content">
@@ -95,1044 +103,607 @@
         </div>
     </div>
 
-
     <script>
         const canvas = document.getElementById('cosmicCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const exitPlanetViewButton = document.getElementById('exitPlanetViewButton');
+        
+        let dpr = window.devicePixelRatio || 1;
+        
+        function resizeCanvas() {
+            dpr = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0); 
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
         const centralFigureImage = new Image();
         let imageFailedToLoad = false;
         centralFigureImage.crossOrigin = "Anonymous"; 
-        centralFigureImage.onload = () => { run(); };
-        centralFigureImage.onerror = () => { imageFailedToLoad = true; run(); };
+        centralFigureImage.onload = () => { preloader.itemLoaded('figure'); }; 
+        centralFigureImage.onerror = () => { imageFailedToLoad = true; preloader.itemLoaded('figure'); }; 
         centralFigureImage.src = 'https://i.imgur.com/Zclc7ji.png';
 
-        let stars = [], renderables = [], particles = [], dust = [], shootingStars = [];
-        let nebulaCanvas; 
-        const STAR_COUNT = 500; 
-        const DUST_COUNT = 100;
+        let renderables = [], particles = [], shootingStars = [], orbitalContent = []; 
+        let energyWebInstance = null; 
+        let nebulaCanvas = null; 
+        const STAR_COUNT = 400; 
+        const DUST_COUNT = 80;
         const BRANCH_COUNT = 30;
         const GOLD_COLOR = '#ffc300';
         const DARK_GOLD_COLOR = '#ff9400';
-        let globalScale = 1.0;
+        
+        let globalScale = 1.0; 
+        let targetGlobalScale = 1.0; 
+        let currentGlobalScale = 1.0; 
+        const overviewScale = 1.0;
+        const planetViewScale = 2.5; 
+        const transitionDuration = 1200; 
+        
         let isDragging = false;
         let hasDragged = false;
         let lastMouseX = 0, lastMouseY = 0;
-        let rotationX = 0, rotationY = 0;
+        
+        let rotationX = 0, rotationY = 0; 
+        let targetRotationX = 0, targetRotationY = 0; 
+        let currentRotationX = 0, currentRotationY = 0; 
+        
+        let planetViewRotationX = 0, planetViewRotationY = 0; 
+        
         let tugOffsetX = 0, tugOffsetY = 0;
         let targetTugOffsetX = 0, targetTugOffsetY = 0;
         let isIntroAnimationDone = false;
         const introDuration = 2500; 
         let introStartTime = null;
         let beamStartTime = null;
-        const beamDuration = 600;
         let isHoveringFigure = false;
-        let targetFigureScale = 1.0;
-        let currentFigureExtraScale = 1.0;
-        let isSubMenuOpen = false;
+        let targetFigureScale = 1.0; 
+        let currentFigureExtraScale = 1.0; 
 
-        // --- STEP 1: Expand serviceData ---
+        let isInPlanetView = false;
+        let isTransitioning = false; 
+        let transitionStartTime = 0;
+        let selectedNode = null;
+
+        // Discovery Cycle Variables
+        let isGlobalHighlightActive = false; // Toggled by clicking AxStarr
+        let autoHighlightIndex = 0;
+        let lastHighlightSwitchTime = 0;
+        const highlightDuration = 1800; // Time each node stays highlighted in the loop
+
+        let initialPinchDistance = 0;
+        let initialPinchScale = 1;
+        let isPinching = false;
+        
+        const planetImages = {};
+        const planetImageUrls = {
+            'ai': 'https://i.imgur.com/f8FBfYn.png', 
+            'music': 'https://i.imgur.com/oyX9xlj.png',
+            'engineering': 'https://i.imgur.com/jC0v2Fu.png',
+            'design': 'https://i.imgur.com/fxWzyvJ.png', 
+            'media': 'https://i.imgur.com/KTdve2W.png',
+            'culture': 'https://i.imgur.com/T62UBRM.png',
+            'uni': 'https://i.imgur.com/YfbTPyn.png',
+            'starrt': 'https://i.imgur.com/BLfWiVI.png',
+            'legacy': 'https://i.imgur.com/zqAGxmw.png'
+        };
+        const totalItemsToLoad = Object.keys(planetImageUrls).length + 1; 
+
+        const preloader = {
+            loadedCount: 0,
+            itemLoaded: function(itemName) {
+                this.loadedCount++;
+                if (this.loadedCount === totalItemsToLoad) run(); 
+            }
+        };
+
+        Object.keys(planetImageUrls).forEach(key => {
+            planetImages[key] = new Image();
+            planetImages[key].crossOrigin = "Anonymous";
+            planetImages[key].onload = () => preloader.itemLoaded(key);
+            planetImages[key].onerror = () => preloader.itemLoaded(key);
+            planetImages[key].src = planetImageUrls[key];
+        });
+
         const serviceData = {
-            music: { title: "Music", full: "My musical services are designed to give your project a polished, studio-quality sound. I offer custom theme song creation, a bespoke service for brands and individuals seeking a unique sonic signature. I also provide professionally engineered vocal presets for Bandlab, helping artists achieve a professional sound with ease." },
-            ai: { title: "AI", full: "Harness the power of artificial intelligence. I specialize in building and configuring custom GPTs trained on your specific data and needs. From automating repetitive tasks to creating powerful new creative tools, I design AI solutions that harmonize technology and humanity." },
-            design: { title: "Art", full: "Storytelling through image, motion, and experience. I offer creative services for artists and businesses, including the creation of compelling AI-powered video ads and mesmerizing music visualizers for your tracks. Let's bring your vision to life." },
-            engineering: { title: "Engineering", full: "Building tools, systems, and futures. My engineering services cover web development on modern platforms and custom frontend work, as well as smart automation and creative problem-solving. I focus on building with intention to create beautiful and performant digital products." },
-            media: { title: "Media", full: "Placeholder text for Media projects and services." },
-            culture: { title: "Culture", full: "Placeholder text for Culture projects and services." },
-            uni: { title: "U.N.I.", full: "Placeholder text for U.N.I. projects and services." },
-            starrt: { title: "STARRT", full: "Placeholder text for STARRT projects and services." },
-            legacy: { title: "Legacy", full: "Placeholder text for Legacy projects and services." }
+            music: { title: "Music", projects: [
+                { name: "Vocal Preset Pack v1", desc: "Studio-quality Bandlab presets for modern rappers." },
+                { name: "Brand Theme Engine", desc: "Bespoke sonic signatures for luxury brands." },
+                { name: "AxStarr Ambient", desc: "Generative soundscapes for focus and meditation." }
+            ]},
+            ai: { title: "AI", projects: [
+                { name: "GPT Persona Architect", desc: "Customized AI agents with distinct creative personalities." },
+                { name: "Neural Art Pipeline", desc: "Automated generative image generation for fast prototyping." },
+                { name: "Workflow Automator", desc: "Smart systems that take over repetitive creative tasks." }
+            ]},
+            design: { title: "Art", projects: [
+                { name: "VR Gallery Experience", desc: "A walk-through museum of digital artifacts." },
+                { name: "Cyber-Identity Kit", desc: "Futuristic branding and social media assets." },
+                { name: "Holographic Posters", desc: "Motion-based poster designs for virtual events." }
+            ]},
+            engineering: { title: "Engineering", projects: [
+                { name: "Launchpad Framework", desc: "A high-performance stack for rapid startup deployment." },
+                { name: "Starrt Engine v2", desc: "Backend architecture for data-driven applications." },
+                { name: "Smart UI Components", desc: "Reactive 3D-integrated frontend library." }
+            ]},
+            media: { title: "Media", projects: [
+                { name: "AI Ad Generator", desc: "Dynamic video advertisements powered by AI narrative engines." },
+                { name: "Lyric Visualizers", desc: "Music videos that react in real-time to audio frequencies." },
+                { name: "Immersive Documentaries", desc: "Mixed-media storytelling about technology and culture." }
+            ]},
+            culture: { title: "Culture", projects: [
+                { name: "Modern Folklore Archive", desc: "Mapping current digital trends to ancient myths." },
+                { name: "The Global Nomad", desc: "A social initiative for location-independent creatives." },
+                { name: "Tech-Tradition Fusion", desc: "Product designs blending artisanal craft with high-tech." }
+            ]},
+            uni: { title: "U.N.I.", projects: [
+                { name: "Universal Network Hub", desc: "Cross-platform workspace for remote teams." },
+                { name: "Creative ID System", desc: "A unified verified profile for the creative industry." },
+                { name: "Collab Stream", desc: "Real-time collaborative drafting tool for writers." }
+            ]},
+            starrt: { title: "STARRT-UPS", projects: [
+                { name: "Founder Accelerator", desc: "Mentorship and funding for zero-to-one startups." },
+                { name: "Rapid Proto Lab", desc: "Turn a napkin sketch into a prototype in 48 hours." },
+                { name: "Pitch Visualizer", desc: "Turn spreadsheets into compelling investor stories." }
+            ]},
+            legacy: { title: "Legacy", projects: [
+                { name: "Digital Heirloom Vault", desc: "Encrypted storage intended to last for 100 years." },
+                { name: "Asset Preservation", desc: "Strategies for protecting intellectual property long-term." },
+                { name: "Future-Proof Records", desc: "Blockchain-based logging for historical creative milestones." }
+            ]},
         };
         
-        // --- STEP 1: Expand serviceConfig to 9 nodes ---
         const nodeCount = 9;
-        const serviceConfig = {
-            'ai':          { theta: (Math.PI * 2 / nodeCount) * 0,  phi: Math.PI * 0.5,  colors: ['#00AADD', '#00FFFF'], icon: '\uf544' },
-            'design':      { theta: (Math.PI * 2 / nodeCount) * 1,  phi: Math.PI * 0.5,  colors: ['#FF00FF', '#FFFF00'], icon: '\uf1fc' },
-            'engineering': { theta: (Math.PI * 2 / nodeCount) * 2,  phi: Math.PI * 0.5,  colors: ['#4B4B4B', '#B87333'], icon: '\uf085' },
-            'music':       { theta: (Math.PI * 2 / nodeCount) * 3,  phi: Math.PI * 0.5,  colors: ['#1DB954', '#8A2BE2'], icon: '\uf001' },
-            // --- NEW: Unique color schemes for new nodes ---
-            'media':       { theta: (Math.PI * 2 / nodeCount) * 4,  phi: Math.PI * 0.5,  colors: ['#FF6347', '#FFD700'], icon: '\uf03d' }, // Tomato & Gold
-            'culture':     { theta: (Math.PI * 2 / nodeCount) * 5,  phi: Math.PI * 0.5,  colors: ['#DAA520', '#F4A460'], icon: '\uf1ce' }, // Goldenrod & Sandy Brown
-            'uni':         { theta: (Math.PI * 2 / nodeCount) * 6,  phi: Math.PI * 0.5,  colors: ['#FFFFFF', '#87CEEB'], icon: '\uf549' }, // White & Sky Blue
-            'starrt':      { theta: (Math.PI * 2 / nodeCount) * 7,  phi: Math.PI * 0.5,  colors: ['#FF4500', '#FF8C00'], icon: '\uf135' }, // OrangeRed & Dark Orange
-            'legacy':      { theta: (Math.PI * 2 / nodeCount) * 8,  phi: Math.PI * 0.5,  colors: ['#C0C0C0', '#FFFAF0'], icon: '\uf1b3' }  // Silver & Floral White
-        };
-        // --- END STEP 1 ---
+        const serviceConfig = [
+            { key: 'ai', theta: (Math.PI * 2 / nodeCount) * 0, phi: Math.PI * 0.5, colors: ['#00AADD', '#00FFFF'], icon: '\uf544' },
+            { key: 'design', theta: (Math.PI * 2 / nodeCount) * 1, phi: Math.PI * 0.5, colors: ['#FF00FF', '#FFFF00'], icon: '\uf1fc' }, 
+            { key: 'engineering', theta: (Math.PI * 2 / nodeCount) * 2, phi: Math.PI * 0.5, colors: ['#4B4B4B', '#B87333'], icon: '\uf085' },
+            { key: 'music', theta: (Math.PI * 2 / nodeCount) * 3, phi: Math.PI * 0.5, colors: ['#1DB954', '#8A2BE2'], icon: '\uf001' },
+            { key: 'media', theta: (Math.PI * 2 / nodeCount) * 4, phi: Math.PI * 0.5, colors: ['#FF6347', '#FFD700'], icon: '\uf03d' }, 
+            { key: 'culture', theta: (Math.PI * 2 / nodeCount) * 5, phi: Math.PI * 0.5, colors: ['#DAA520', '#F4A460'], icon: '\uf1ce' }, 
+            { key: 'uni', theta: (Math.PI * 2 / nodeCount) * 6, phi: Math.PI * 0.5, colors: ['#FFFFFF', '#87CEEB'], icon: '\uf549' }, 
+            { key: 'starrt', theta: (Math.PI * 2 / nodeCount) * 7, phi: Math.PI * 0.5, colors: ['#FF4500', '#FF8C00'], icon: '\uf135' }, 
+            { key: 'legacy', theta: (Math.PI * 2 / nodeCount) * 8, phi: Math.PI * 0.5, colors: ['#C0C0C0', '#FFFAF0'], icon: '\uf1b3' }, 
+        ];
 
-        function createNebula() {
-            const size = 1024;
-            let offscreenCanvas;
-            let offscreenCtx;
-            try {
-                offscreenCanvas = document.createElement('canvas');
-                offscreenCanvas.width = size; offscreenCanvas.height = size;
-                offscreenCtx = offscreenCanvas.getContext('2d');
-                if (!offscreenCtx) {
-                    throw new Error("Could not get 2D context for nebula.");
-                }
-            } catch (e) {
-                console.error("Failed to create offscreen canvas for nebula:", e);
-                return null; 
-            }
-
-            const colors = ['#4a1c54', '#1f195e', '#133b6d'];
-            offscreenCtx.fillStyle = '#000';
-            offscreenCtx.fillRect(0, 0, size, size);
-            for (let i = 0; i < 50; i++) {
-                const x = Math.random() * size, y = Math.random() * size;
-                const radius = Math.random() * size / 3 + size / 5;
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const grad = offscreenCtx.createRadialGradient(x, y, 0, x, y, radius);
-                grad.addColorStop(0, color + '40');
-                grad.addColorStop(1, color + '00');
-                offscreenCtx.fillStyle = grad;
-                offscreenCtx.fillRect(0, 0, size, size);
-            }
-
-            offscreenCtx.save();
-            offscreenCtx.textAlign = 'center';
-            offscreenCtx.textBaseline = 'middle';
-            offscreenCtx.font = `bold ${size/8}px 'Arial Black', sans-serif`;
-            offscreenCtx.fillStyle = `rgba(255, 220, 150, 0.04)`;
-            offscreenCtx.globalCompositeOperation = 'overlay';
-            offscreenCtx.fillText('MAX STARR', size / 2, size / 2);
-            offscreenCtx.restore();
-
-            return offscreenCanvas;
+        function lerp(start, end, t) { return start * (1 - t) + end * t; }
+        function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+        function angleLerp(start, end, t) {
+            const delta = end - start;
+            const shortestAngle = ((delta + Math.PI) % (Math.PI * 2)) - Math.PI;
+            return start + shortestAngle * t;
         }
 
-        class ShootingStar {
+        class Projectable {
             constructor() {
-                const isVertical = Math.random() > 0.5;
-                if (isVertical) {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() > 0.5 ? -50 : canvas.height + 50;
-                } else {
-                    this.x = Math.random() > 0.5 ? -50 : canvas.width + 50;
-                    this.y = Math.random() * canvas.height;
-                }
-                
-                const angleToCenter = Math.atan2(canvas.height / 2 - this.y, canvas.width / 2 - this.x);
-                const spread = Math.PI / 4;
-                this.angle = angleToCenter + (Math.random() - 0.5) * spread;
-
-                this.speed = Math.random() * 8 + 5;
-                this.velX = Math.cos(this.angle) * this.speed;
-                this.velY = Math.sin(this.angle) * this.speed;
-                this.size = Math.random() * 1.5 + 0.5;
-                this.life = 1;
-                this.alive = true;
+                this.x3d = 0; this.y3d = 0; this.z3d = 0;
+                this.rotatedX = 0; this.rotatedY = 0; this.rotatedZ = 0;
+                this.screenX = 0; this.screenY = 0; this.scale = 1; this.alpha = 1;
             }
-
-            update() {
-                this.x += this.velX;
-                this.y += this.velY;
-                this.life -= 0.01;
-                if (this.life <= 0) {
-                    this.alive = false;
+            project(rotX, rotY, zoomScale = 1) {
+                const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+                const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+                const tX = this.x3d * cosY - this.z3d * sinY;
+                const tZ = this.x3d * sinY + this.z3d * cosY;
+                this.rotatedX = tX;
+                this.rotatedY = this.y3d * cosX - tZ * sinX;
+                this.rotatedZ = this.y3d * sinX + tZ * cosX;
+                const perspective = window.innerWidth * 0.8;
+                const effZ = perspective + this.rotatedZ;
+                if (effZ <= 0) { this.scale = 0; } else {
+                    this.scale = perspective / effZ;
+                    this.screenX = window.innerWidth / 2 + this.rotatedX * this.scale;
+                    this.screenY = window.innerHeight / 2 + this.rotatedY * this.scale;
                 }
-            }
-
-            draw(ctx) {
-                const tailLength = 15;
-                const tailX = this.x - this.velX * tailLength;
-                const tailY = this.y - this.velY * tailLength;
-                const gradient = ctx.createLinearGradient(this.x, this.y, tailX, tailY);
-                gradient.addColorStop(0, `rgba(255, 255, 255, ${this.life})`);
-                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-                ctx.beginPath();
-                ctx.moveTo(tailX, tailY);
-                ctx.lineTo(this.x, this.y);
-                ctx.lineWidth = this.size;
-                ctx.strokeStyle = gradient;
-                ctx.stroke();
             }
         }
 
-        class Star {
+        class Star extends Projectable {
             constructor() {
-                this.radius3d = Math.random() * (canvas.width * 1.2) + (canvas.width * 0.3);
+                super();
+                this.radius3d = Math.random() * (window.innerWidth * 1.5) + (window.innerWidth * 0.3);
                 const theta = Math.random() * 2 * Math.PI;
                 const phi = Math.acos((Math.random() * 2) - 1);
                 this.x3d = this.radius3d * Math.sin(phi) * Math.cos(theta);
                 this.y3d = this.radius3d * Math.sin(phi) * Math.sin(theta);
                 this.z3d = this.radius3d * Math.cos(phi);
-                this.originalRadius = Math.random() * 1.5 + 0.5;
+                this.originalRadius = Math.random() * 1.2 + 0.5;
             }
-            project(rotX, rotY) {
-                const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
-                const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
-                const tempX1 = this.x3d * cosY - this.z3d * sinY;
-                const tempZ1 = this.x3d * sinY + this.z3d * cosY;
-                this.rotatedX = tempX1;
-                this.rotatedY = this.y3d * cosX - tempZ1 * sinX;
-                this.rotatedZ = this.y3d * sinX + tempZ1 * cosX;
-                const perspective = canvas.width * 0.8;
-                const scale = perspective / (perspective + this.rotatedZ);
-                this.screenX = canvas.width / 2 + this.rotatedX * scale;
-                this.screenY = canvas.height / 2 + this.rotatedY * scale;
-                this.screenRadius = this.originalRadius * scale;
-                this.alpha = (this.rotatedZ + this.radius3d) / (this.radius3d * 2);
+            project(rotX, rotY, zoomScale) {
+                super.project(rotX, rotY, zoomScale);
+                this.screenRadius = this.originalRadius * this.scale;
+                this.alpha = this.scale > 0 ? (this.rotatedZ + this.radius3d) / (this.radius3d * 2) : 0;
             }
             draw() {
-                if (this.screenRadius < 0) return;
-                ctx.beginPath();
-                ctx.arc(this.screenX, this.screenY, this.screenRadius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
-                ctx.fill();
+                if (this.scale <= 0) return;
+                ctx.beginPath(); ctx.arc(this.screenX, this.screenY, this.screenRadius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, this.alpha)})`; ctx.fill();
             }
         }
 
         class CosmicDust extends Star {
             constructor() {
                 super();
-                this.radius3d = Math.random() * (canvas.width * 0.5) + (canvas.width * 0.1);
-                this.originalRadius = Math.random() * 0.8 + 0.2;
+                this.radius3d = Math.random() * (window.innerWidth * 0.5) + (window.innerWidth * 0.1);
                 this.color = `hsl(${Math.random() * 60 + 200}, 100%, 80%)`;
             }
             draw() {
-                if (this.screenRadius < 0) return;
-                ctx.beginPath();
-                ctx.arc(this.screenX, this.screenY, this.screenRadius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.globalAlpha = this.alpha * 0.7;
-                ctx.fill();
-                ctx.globalAlpha = 1;
+                if (this.scale <= 0) return;
+                ctx.beginPath(); ctx.arc(this.screenX, this.screenY, this.screenRadius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.alpha * 0.7); ctx.fill(); ctx.globalAlpha = 1;
             }
         }
-        
+
         class Node extends Star {
-            constructor(serviceKey, config) {
+            constructor(idx, config) {
                 super();
-                // --- FIX: Reduced radius to bring nodes closer to center ---
-                this.baseRadius3d = canvas.width * 0.25;
+                this.idx = idx;
+                this.baseRadius3d = Math.min(window.innerWidth, window.innerHeight) * 0.45;
                 this.theta = config.theta; this.phi = config.phi;
-                this.originalRadius = 30;
-                this.serviceKey = serviceKey;
-                this.colors = config.colors; this.icon = config.icon;
+                this.originalRadius = 22;
+                this.serviceKey = config.key; this.colors = config.colors; this.icon = config.icon;
                 this.isActivated = false; this.isHovered = false; this.activationProgress = 0;
-                
-                if(this.serviceKey === 'ai') {
-                    this.particles = [];
-                }
             }
             project(rotX, rotY, zoomScale) {
-                this.radius3d = this.baseRadius3d * (1 + (zoomScale - 1) * 0.4); 
+                const pFactor = 0.6;
+                const rFactor = Math.min(window.innerWidth, window.innerHeight) * 0.45;
+                this.radius3d = rFactor * (1 + (zoomScale - 1) * pFactor);
                 this.x3d = this.radius3d * Math.sin(this.phi) * Math.cos(this.theta);
                 this.y3d = this.radius3d * Math.sin(this.phi) * Math.sin(this.theta);
                 this.z3d = this.radius3d * Math.cos(this.phi);
-                super.project(rotX, rotY);
-                this.screenRadius *= (1 + (zoomScale - 1) * 0.1);
+                super.project(rotX, rotY, zoomScale);
+                this.screenRadius *= (1 + (zoomScale - 1) * 0.2);
             }
             draw(timestamp) {
                 if (this.activationProgress < 1 && this.isActivated) this.activationProgress += 0.05;
-                const currentScale = easeInOutCubic(this.activationProgress);
-                if (!this.isActivated || this.screenRadius < 0) return;
-                const pulse = this.isHovered ? 1.1 : 1 + Math.sin(timestamp / 500) * 0.05;
-                const finalRadius = this.screenRadius * currentScale * pulse;
+                const cScale = easeInOutCubic(this.activationProgress);
+                if (!this.isActivated || this.scale <= 0) return;
+                
+                // --- Logic: Is this node currently highlighted? ---
+                const isAutoHighlighted = !isGlobalHighlightActive && (this.idx === autoHighlightIndex);
+                const isEffectiveHighlight = isGlobalHighlightActive || isAutoHighlighted || this.isHovered;
+
+                const pulse = isEffectiveHighlight ? 1.3 : 1 + Math.sin(timestamp / 500) * 0.05;
+                const finalRadius = this.screenRadius * cScale * pulse;
+                if (finalRadius <= 0) return;
 
                 ctx.save();
-
-                // --- No changes to drawing logic, it will just use the config passed in ---
-                if (this.serviceKey === 'engineering' || this.serviceKey === 'uni') { // Eng-style
-                    const rotation = timestamp * 0.0003;
-                    ctx.strokeStyle = this.colors[1]; // Copper
-                    ctx.lineWidth = 1.5;
-                    const dodecRadius = finalRadius * 1.2;
-                    
-                    const drawPentagon = (radius, rotOffset) => {
-                        ctx.beginPath();
-                        for (let i = 0; i < 5; i++) {
-                            const angle = (Math.PI * 2 / 5) * i + rotOffset;
-                            const x = this.screenX + Math.cos(angle) * radius;
-                            const y = this.screenY + Math.sin(angle) * radius;
-                            if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                    };
-                    drawPentagon(dodecRadius, rotation);
-                    drawPentagon(dodecRadius * 0.65, rotation + Math.PI);
-                    
-                    const metalGradient = ctx.createRadialGradient(this.screenX - finalRadius * 0.3, this.screenY - finalRadius * 0.3, finalRadius * 0.1, this.screenX, this.screenY, finalRadius);
-                    metalGradient.addColorStop(0, '#CCCCCC');
-                    metalGradient.addColorStop(1, this.colors[0]);
-                    ctx.fillStyle = metalGradient;
-                    ctx.beginPath(); ctx.arc(this.screenX, this.screenY, finalRadius, 0, Math.PI * 2); ctx.fill();
-
-                } else { // All other nodes
-                    const bodyGradient = ctx.createRadialGradient(this.screenX - finalRadius * 0.2, this.screenY - finalRadius * 0.2, finalRadius * 0.1, this.screenX, this.screenY, finalRadius);
-                    bodyGradient.addColorStop(0, this.colors[0]); bodyGradient.addColorStop(1, this.colors[1]);
-                    ctx.fillStyle = bodyGradient; ctx.beginPath(); ctx.arc(this.screenX, this.screenY, finalRadius, 0, Math.PI * 2); ctx.fill();
+                // Enhanced glow for active nodes
+                if (isEffectiveHighlight) {
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = this.colors[1];
                 }
 
-                const highlightGradient = ctx.createRadialGradient(this.screenX - finalRadius * 0.4, this.screenY - finalRadius * 0.4, 0, this.screenX, this.screenY, finalRadius);
-                highlightGradient.addColorStop(0, 'rgba(255,255,255,0.3)'); highlightGradient.addColorStop(0.5, 'rgba(255,255,255,0)');
-                ctx.fillStyle = highlightGradient; ctx.fill();
-                
-                if (this.serviceKey === 'ai' || this.serviceKey === 'media') { // AI-style
-                    ctx.strokeStyle = this.colors[1] + '40';
-                    ctx.lineWidth = 1;
-                    for(let i=1; i < 5; i++) {
-                        ctx.beginPath();
-                        ctx.arc(this.screenX, this.screenY, finalRadius * (i/5), 0, Math.PI*2);
-                        ctx.stroke();
-                    }
-
-                    // Only AI gets particles
-                    if(this.serviceKey === 'ai') {
-                        if(Math.random() > 0.8) this.particles.push({x:0, y:0, z:0, life: 1});
-                        this.particles.forEach(p => {
-                            p.x += (Math.random() - 0.5) * 0.1;
-                            p.y += (Math.random() - 0.5) * 0.1;
-                            p.z += (Math.random() - 0.5) * 0.1;
-                            p.life -= 0.02;
-                        });
-                        this.particles = this.particles.filter(p => p.life > 0);
-                        this.particles.forEach(p => {
-                            const pRadius = Math.sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
-                            const pScale = finalRadius * (1 + pRadius);
-                            ctx.beginPath();
-                            ctx.arc(this.screenX + p.x * pScale, this.screenY + p.y * pScale, p.life * 2, 0, Math.PI*2);
-                            ctx.fillStyle = this.colors[1] + Math.round(p.life * 255).toString(16).padStart(2,'0');
-                            ctx.fill();
-                        });
-                    }
-                }
-                
-                if (this.serviceKey === 'music' || this.serviceKey === 'starrt') { // Music-style
-                    const waveCount = 3;
-                    const waveSpacing = 30 * (finalRadius / 35);
-                    const pulseFactor = (timestamp * 0.0015) % 1;
-
-                    for (let i = 0; i < waveCount; i++) {
-                        const progress = (pulseFactor + i / waveCount) % 1;
-                        const radius = finalRadius + progress * waveSpacing;
-                        const opacity = Math.sin(progress * Math.PI) * 0.8;
-
-                        ctx.beginPath();
-                        ctx.arc(this.screenX, this.screenY, radius, 0, Math.PI * 2);
-                        ctx.strokeStyle = this.colors[1] + Math.round(opacity * 255).toString(16).padStart(2, '0');
-                        ctx.lineWidth = 2.5 * (1 - progress);
-                        ctx.stroke();
-                    }
-                }
-                
-                // --- NEW: Unique visual effects for new nodes ---
-                if (this.serviceKey === 'media') {
-                    // Pulsing/flickering inner glow
-                    const pulse = Math.abs(Math.sin(timestamp * 0.005));
-                    ctx.beginPath();
-                    ctx.arc(this.screenX, this.screenY, finalRadius * (0.6 + pulse * 0.2), 0, Math.PI * 2);
-                    ctx.fillStyle = this.colors[1] + '80';
-                    ctx.fill();
-                }
-
-                if (this.serviceKey === 'uni') {
-                    // Sharp, bright star-like flare
-                    const flarePoints = 4;
-                    ctx.strokeStyle = this.colors[1] + 'A0';
-                    ctx.lineWidth = 2.5;
-                    for (let i = 0; i < flarePoints; i++) {
-                        const angle = (Math.PI * 2 / flarePoints) * i + (timestamp * 0.0005);
-                        const length = finalRadius * 1.3;
-                        ctx.beginPath();
-                        ctx.moveTo(this.screenX, this.screenY);
-                        ctx.lineTo(this.screenX + Math.cos(angle) * length, this.screenY + Math.sin(angle) * length);
-                        ctx.stroke();
-                    }
-                }
-
-                if (this.serviceKey === 'legacy') {
-                    // Simple, elegant, slow-pulsing outer ring
-                    const pulse = (Math.sin(timestamp * 0.0008) + 1) / 2; // Slow pulse
-                    ctx.strokeStyle = this.colors[0] + 'C0';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(this.screenX, this.screenY, finalRadius * (1.1 + pulse * 0.15), 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-                // --- END NEW EFFECTS ---
-
+                const bodyGrad = ctx.createRadialGradient(this.screenX - finalRadius*0.2, this.screenY - finalRadius*0.2, finalRadius*0.1, this.screenX, this.screenY, finalRadius);
+                bodyGrad.addColorStop(0, this.colors[0]); bodyGrad.addColorStop(1, this.colors[1]);
+                ctx.fillStyle = bodyGrad; ctx.beginPath(); ctx.arc(this.screenX, this.screenY, finalRadius, 0, Math.PI * 2); ctx.fill();
 
                 ctx.font = `900 ${finalRadius * 0.8}px "Font Awesome 5 Free"`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-
-                if (this.serviceKey === 'design' || this.serviceKey === 'culture') { // Design-style
-                    const glitchAmount = finalRadius * 0.1;
-                    const timeSeed = timestamp * 0.01;
-                    
-                    ctx.globalCompositeOperation = 'lighter';
-                    ctx.fillStyle = `rgba(255, 0, 255, 0.8)`;
-                    ctx.fillText(this.icon, this.screenX + Math.sin(timeSeed) * glitchAmount, this.screenY);
-                    ctx.fillStyle = `rgba(0, 255, 255, 0.8)`;
-                    ctx.fillText(this.icon, this.screenX - Math.sin(timeSeed) * glitchAmount, this.screenY);
-                    
-                    ctx.globalCompositeOperation = 'source-over';
-                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                    for(let i=0; i < finalRadius * 2; i+=4) {
-                       ctx.fillRect(this.screenX - finalRadius, this.screenY - finalRadius + i, finalRadius * 2, 2);
-                    }
-                }
-
-                // --- Icon Coloring ---
-                if (this.serviceKey === 'engineering' || this.serviceKey === 'uni') ctx.fillStyle = this.colors[1];
-                else if (this.serviceKey === 'music' || this.serviceKey === 'starrt') ctx.fillStyle = this.colors[1];
-                else if (this.serviceKey === 'ai' || this.serviceKey === 'media') ctx.fillStyle = this.colors[1];
-                else if (this.serviceKey === 'design' || this.serviceKey === 'culture') ctx.fillStyle = '#FFFFFF';
-                else if (this.serviceKey === 'legacy') ctx.fillStyle = this.colors[0];
-                else ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
                 ctx.fillText(this.icon, this.screenX, this.screenY);
                 
-                ctx.restore();
-
-                if (this.isHovered) {
-                    ctx.font = `bold ${finalRadius * 0.5}px Segoe UI`;
-                    ctx.fillStyle = '#ffffff'; ctx.shadowColor = this.colors[0]; ctx.shadowBlur = 10;
-                    ctx.fillText(serviceData[this.serviceKey].title, this.screenX, this.screenY + finalRadius * 1.5);
-                    ctx.shadowBlur = 0;
+                // --- Logic: Show titles permanently in highlight mode ---
+                if (isEffectiveHighlight && !isInPlanetView && !isTransitioning) {
+                    ctx.font = `bold ${finalRadius * 0.6}px Segoe UI`;
+                    ctx.fillStyle = '#ffffff'; 
+                    ctx.shadowColor = 'black'; ctx.shadowBlur = 10;
+                    ctx.fillText(serviceData[this.serviceKey].title, this.screenX, this.screenY + finalRadius * 1.8);
                 }
+                ctx.restore();
             }
         }
-        
-        class Figure {
-             constructor() { this.rotatedZ = 0; }
-             project(rotX, rotY, zoomScale) { 
-                this.rotatedZ = 0; 
-             }
-             draw(timestamp, dynamicOriginX, dynamicOriginY, currentFigureScale, introProgress, zoomScale) {
+
+        class Figure extends Projectable {
+            constructor() { super(); this.baseScale = 0.5; this.rotatedZ = 0; }
+            project(rotX, rotY, zoomScale) { super.project(0, 0, zoomScale); }
+            draw(timestamp, prog, hScale, zScale) {
                 if (imageFailedToLoad || !centralFigureImage.complete) return;
-                
-                const parallaxFactor = 0.1; 
-                const effectiveZoom = 1 + (zoomScale - 1) * parallaxFactor;
-                const finalScale = currentFigureScale * currentFigureExtraScale * effectiveZoom;
-                
-                const figHeight = canvas.height * finalScale;
-                const figWidth = centralFigureImage.naturalWidth * (figHeight / centralFigureImage.naturalHeight);
-                let glowStrength1, glowStrength2;
-                if(isIntroAnimationDone) {
-                    const pulse = (Math.sin(timestamp / 800) + 1) / 2; 
-                    glowStrength1 = 10 + pulse * 15;
-                    glowStrength2 = 25 + pulse * 30;
-                    if(isHoveringFigure) { glowStrength1 = 30; glowStrength2 = 70; }
-                } else {
-                    glowStrength1 = 15 * introProgress;
-                    glowStrength2 = 35 * introProgress;
-                }
+                const effZ = zScale; 
+                const finalScale = this.baseScale * hScale * effZ * lerp(0.05, 1, prog);
+                const figH = window.innerHeight * finalScale;
+                const figW = centralFigureImage.naturalWidth * (figH / centralFigureImage.naturalHeight);
+                const yOff = isIntroAnimationDone ? Math.sin(timestamp / 1500) * 10 : 0;
+                const drawX = this.screenX + tugOffsetX - figW / 2;
+                const drawY = lerp(window.innerHeight + 150, this.screenY + tugOffsetY + yOff, prog) - figH / 2;
                 ctx.save();
-                ctx.filter = `drop-shadow(0 0 ${glowStrength1}px ${GOLD_COLOR}) drop-shadow(0 0 ${glowStrength2}px ${DARK_GOLD_COLOR})`;
-                ctx.drawImage(centralFigureImage, dynamicOriginX - figWidth / 2, dynamicOriginY - figHeight / 2, figWidth, figHeight);
+                ctx.globalAlpha = prog;
+                ctx.filter = `drop-shadow(0 0 15px ${GOLD_COLOR}) drop-shadow(0 0 30px ${DARK_GOLD_COLOR})`;
+                ctx.drawImage(centralFigureImage, drawX, drawY, figW, figH);
+                ctx.restore();
+            }
+        }
+
+        class EnergyWeb {
+            constructor() { this.branches = []; this.rotatedZ = 1000; }
+            startGrowth() {
+                const cX = window.innerWidth / 2, cY = window.innerHeight / 2;
+                for (let i = 0; i < BRANCH_COUNT; i++) {
+                    const ang = (Math.PI * 2 / BRANCH_COUNT) * i;
+                    this.branches.push(new Branch(cX + 100 * Math.cos(ang), cY + 100 * Math.sin(ang), ang, 2));
+                }
+            }
+            draw(t, dx, dy, zs) {
+                ctx.save(); ctx.translate(dx, dy); ctx.scale(zs, zs); ctx.translate(-dx, -dy);
+                ctx.strokeStyle = GOLD_COLOR; ctx.shadowBlur = 10; ctx.shadowColor = GOLD_COLOR;
+                this.branches.forEach(b => { b.update(t); b.grow(); b.draw(dx, dy); });
                 ctx.restore();
             }
         }
 
         class Branch {
-            constructor(staticX, staticY, angle, depth, parent = null) {
-                this.staticX = staticX; this.staticY = staticY;
-                this.originX = staticX; this.originY = staticY;
-                this.angle = angle; this.depth = depth;
-                this.parent = parent;
-                this.maxLength = Math.random() * 200 + 100 + (5 - depth) * 50;
-                this.currentLength = 0;
-                this.speed = (Math.random() * 1 + 0.5) * 1.5;
-                this.lineWidth = Math.random() * 0.5 + (4 - depth) * 0.3;
-                this.children = [];
-                this.isGrown = false;
-                this.oscillationRadius = Math.random() * 15 + 5;
-                this.oscillationSpeed = (Math.random() * 0.5 + 0.5) * 0.001;
-                this.oscillationOffset = Math.random() * Math.PI * 2;
-                this.endX = this.originX;
-                this.endY = this.originY;
+            constructor(x, y, ang, dep) {
+                this.ox = x; this.oy = y; this.ang = ang; this.dep = dep;
+                this.maxL = Math.random() * 150 + 100; this.curL = 0; this.grown = false; this.kids = [];
             }
-            update(timestamp) {
-                if (this.depth === 2) { 
-                    const angle = timestamp * this.oscillationSpeed + this.oscillationOffset;
-                    this.originX = this.staticX + Math.cos(angle) * this.oscillationRadius;
-                    this.originY = this.staticY + Math.sin(angle) * this.oscillationRadius;
-                }
-                this.endX = this.originX + this.currentLength * Math.cos(this.angle);
-                this.endY = this.originY + this.currentLength * Math.sin(this.angle);
-                this.children.forEach(child => child.update(timestamp));
-            }
+            update(t) { this.ex = this.ox + this.curL * Math.cos(this.ang); this.ey = this.oy + this.curL * Math.sin(this.ang); }
             grow() {
-                if (this.currentLength < this.maxLength) {
-                    this.currentLength += this.speed;
-                } else if (!this.isGrown) {
-                    this.isGrown = true;
-                    if (this.depth > 0) {
-                        const angleOffset = Math.PI / (Math.random() * 4 + 4);
-                        this.children.push(new Branch(this.endX, this.endY, this.angle - angleOffset, this.depth - 1, this));
-                        this.children.push(new Branch(this.endX, this.endY, this.angle + angleOffset, this.depth - 1, this));
-                    }
+                if (this.curL < this.maxL) this.curL += 2;
+                else if (!this.grown && this.dep > 0) {
+                    this.grown = true;
+                    this.kids.push(new Branch(this.ex, this.ey, this.ang - 0.4, this.dep - 1), new Branch(this.ex, this.ey, this.ang + 0.4, this.dep - 1));
                 }
-                this.children.forEach(child => child.grow());
+                this.kids.forEach(k => k.grow());
             }
-            draw(startX, startY) {
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(this.endX, this.endY);
-                ctx.lineWidth = this.lineWidth;
-                ctx.strokeStyle = GOLD_COLOR;
-                ctx.stroke();
-                this.children.forEach(child => child.draw(this.endX, this.endY));
+            draw(px, py) {
+                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(this.ex, this.ey); ctx.stroke();
+                this.kids.forEach(k => k.draw(this.ex, this.ey));
             }
         }
 
-        class EnergyWeb {
-            constructor() { 
-                this.rotatedZ = 1000; 
-                this.branches = []; 
+        class OrbitalContent extends Star {
+            constructor(idx, projectData) {
+                super(); 
+                this.idx = idx; 
+                this.projectData = projectData;
+                this.radius3d = window.innerWidth * 0.45; 
+                const step = (Math.PI * 2) / 3; 
+                this.theta = step * idx; this.phi = Math.PI * 0.5;
+                this.update3DPos();
             }
-            project() { this.rotatedZ = 1000; }
-            startGrowth() {
-                const centerX = canvas.width / 2, centerY = canvas.height / 2;
-                this.branches = [];
-                for (let i = 0; i < BRANCH_COUNT; i++) {
-                    const angle = (Math.PI * 2 / BRANCH_COUNT) * i + (Math.random() - 0.5) * 0.1;
-                    const originRadius = (Math.random() * 50 + 80);
-                    const branchOriginX = centerX + originRadius * Math.cos(angle);
-                    const branchOriginY = centerY + originRadius * Math.sin(angle);
-                    this.branches.push(new Branch(branchOriginX, branchOriginY, angle, 2));
-                }
-            }
-            draw(timestamp, dynamicOriginX, dynamicOriginY, zoomScale) {
+            update3DPos() { this.x3d = this.radius3d * Math.cos(this.theta); this.y3d = this.radius3d * Math.sin(this.theta); this.z3d = 0; }
+            project(rx, ry) { super.project(rx, ry, 1); }
+            draw(t, hoverY) {
+                if (this.scale <= 0) return;
+                const flicker = Math.sin(t / 100 + this.idx) * 1;
+                const sparkSize = (4 + flicker) * this.scale;
                 ctx.save();
-                ctx.translate(dynamicOriginX, dynamicOriginY);
-                ctx.scale(zoomScale, zoomScale);
-                ctx.translate(-dynamicOriginX, -dynamicOriginY);
-
-                ctx.shadowColor = GOLD_COLOR;
-                ctx.shadowBlur = 10;
-                this.branches.forEach(branch => { 
-                    branch.update(timestamp);
-                    branch.grow();
-                    ctx.beginPath();
-                    ctx.moveTo(dynamicOriginX, dynamicOriginY);
-                    ctx.lineTo(branch.originX, branch.originY);
-                    ctx.lineWidth = branch.lineWidth;
-                    ctx.strokeStyle = GOLD_COLOR;
-                    ctx.stroke();
-                    branch.draw(branch.originX, branch.originY); 
-                });
-                
+                ctx.shadowBlur = 10; ctx.shadowColor = 'white';
+                ctx.fillStyle = '#FFFACD'; 
+                ctx.beginPath(); ctx.arc(this.screenX, this.screenY + (hoverY * 0.5), sparkSize, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = GOLD_COLOR; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+                ctx.beginPath(); ctx.arc(this.screenX, this.screenY + (hoverY * 0.5), sparkSize * 1.5, 0, Math.PI * 2); ctx.stroke();
+                ctx.globalAlpha = 1.0; ctx.fillStyle = 'white';
+                ctx.font = `bold ${13 * this.scale}px Segoe UI`; ctx.textAlign = 'center';
+                ctx.shadowColor = 'black'; ctx.shadowBlur = 5;
+                ctx.fillText(this.projectData.name, this.screenX, this.screenY + (hoverY * 0.5) + 25);
+                if (this.isHovered) {
+                    ctx.fillStyle = GOLD_COLOR; ctx.font = `bold ${14 * this.scale}px Segoe UI`;
+                    ctx.fillText(this.projectData.name, this.screenX, this.screenY + (hoverY * 0.5) + 25);
+                }
                 ctx.restore();
             }
-        }
-
-        class PlantSubMenu {
-            constructor(text, color, angle, action) {
-                this.text = text;
-                this.color = color;
-                this.angle = angle;
-                this.action = action;
-                this.rotatedZ = 1; 
-                this.currentLength = 0;
-                this.maxLength = 140;
-                this.speed = 4;
-                this.screenX = 0;
-                this.screenY = 0;
-                this.isHovered = false;
-                this.scale = 1; 
-            }
-            project(rotX, rotY, zoomScale) { 
-                const parallaxFactor = 0.5; 
-                const effectiveLength = this.maxLength * (1 + (zoomScale - 1) * parallaxFactor);
-
-                this.x3d = effectiveLength * Math.cos(this.angle);
-                this.y3d = effectiveLength * Math.sin(this.angle);
-                this.z3d = 50; 
-                
-                const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
-                const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
-                const tempX1 = this.x3d * cosY - this.z3d * sinY;
-                const tempZ1 = this.x3d * sinY + this.z3d * cosY;
-                this.rotatedX = tempX1;
-                this.rotatedY = this.y3d * cosX - tempZ1 * sinX;
-                this.rotatedZ = this.y3d * sinX + tempZ1 * cosX;
-                
-                const perspective = canvas.width * 0.8;
-                const scale = perspective / (perspective + this.rotatedZ);
-                this.screenX = canvas.width / 2 + this.rotatedX * scale;
-                this.screenY = canvas.height / 2 + this.rotatedY * scale;
-                this.scale = scale; 
-            }
-            isMouseOver(mouseX, mouseY) {
-                if (this.currentLength < this.maxLength || this.scale < 0) return false;
-                const textWidth = ctx.measureText(this.text).width * this.scale;
-                const textHeight = 20 * this.scale; 
-                return mouseX > this.screenX - textWidth / 2 && mouseX < this.screenX + textWidth / 2 &&
-                       mouseY > this.screenY - textHeight / 2 && mouseY < this.screenY + textHeight / 2;
-            }
-            draw(timestamp, originX, originY, isOpen, zoomScale) {
-                if (isOpen && this.currentLength < this.maxLength) this.currentLength += this.speed;
-                else if (!isOpen && this.currentLength > 0) this.currentLength -= this.speed * 1.5;
-                this.currentLength = Math.max(0, this.currentLength);
-                const growthProgress = this.currentLength / this.maxLength;
-                const opacity = easeInOutCubic(growthProgress);
-
-                if (opacity > 0 && this.scale > 0) {
-                    
-                    ctx.save();
-                    ctx.globalAlpha = opacity;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(originX, originY);
-                    const segments = 20;
-                    let lastX = originX;
-                    let lastY = originY;
-                    for (let i = 1; i <= segments; i++) {
-                        const progress = i / segments;
-                        if (progress > growthProgress) break;
-                        
-                        const currentX = lerp(originX, this.screenX, progress);
-                        const currentY = lerp(originY, this.screenY, progress);
-                        
-                        const angleToEndpoint = Math.atan2(this.screenY - originY, this.screenX - originX);
-                        const wobble = Math.sin(progress * Math.PI * 2 + timestamp * 0.001) * 5 * progress * this.scale;
-                        const x = currentX + wobble * Math.cos(angleToEndpoint + Math.PI/2);
-                        const y = currentY + wobble * Math.sin(angleToEndpoint + Math.PI/2);
-                        ctx.lineTo(x, y);
-
-                        if (i > 2 && i % 3 === 0) {
-                            const leafAngle = angleToEndpoint + (Math.PI/4 * (i % 2 === 0 ? -1 : 1)) + Math.sin(timestamp * 0.001 + i) * 0.2;
-                            const leafLength = 20 * this.scale * growthProgress;
-                            const leafWidth = 8 * this.scale * growthProgress;
-
-                            ctx.save();
-                            ctx.translate(x, y);
-                            ctx.rotate(leafAngle);
-                            ctx.beginPath();
-                            ctx.moveTo(0,0);
-                            ctx.quadraticCurveTo(leafLength/2, -leafWidth, leafLength, 0);
-                            ctx.quadraticCurveTo(leafLength/2, leafWidth, 0, 0);
-                            ctx.fillStyle = '#6B8E23';
-                            ctx.fill();
-                            ctx.restore();
-                        }
-
-                        lastX = x;
-                        lastY = y;
-                    }
-                    this.screenX = lastX;
-                    this.screenY = lastY;
-
-                    ctx.strokeStyle = '#553E2D';
-                    ctx.lineWidth = 3 * this.scale;
-                    ctx.lineCap = 'round';
-                    ctx.stroke();
-
-                    const fontSize = 18 * this.scale;
-                    ctx.font = `bold ${fontSize}px Segoe UI`;
-                    ctx.fillStyle = this.isHovered ? '#FFFFFF' : '#ADFF2F'; // Green-Yellow
-                    ctx.shadowColor = 'black';
-                    ctx.shadowBlur = 5;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(this.text, this.screenX, this.screenY);
-                    ctx.restore();
-                }
+            isMouseOver(mx, my, hoverY) {
+                const d = Math.sqrt((mx - this.screenX)**2 + (my - (this.screenY + hoverY * 0.5))**2);
+                return d < 25 * this.scale;
             }
         }
 
-        class Particle {
-            constructor(x, y, targetBranch) {
-                this.x = x; this.y = y; this.targetBranch = targetBranch;
-                this.progress = 0; 
-                this.speed = (Math.random() * 0.3 + 0.2) * 0.01;
-                this.lifespan = 1; this.radius = Math.random() * 1.2;
-            }
-            update() {
-                this.progress += this.speed; this.lifespan -= 0.005;
-                const targetX = this.targetBranch.originX;
-                const targetY = this.targetBranch.originY;
-                const startX = canvas.width / 2 + tugOffsetX;
-                const startY = canvas.height / 2 + tugOffsetY;
-                this.x = startX + (targetX - startX) * this.progress;
-                this.y = startY + (targetY - startY) * this.progress;
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 220, 150, ${this.lifespan})`;
-                ctx.fill();
-            }
-        }
-
-        function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
-        
-        function lerp(start, end, t) { return start * (1 - t) + end * t; } // --- NEW: Added lerp function ---
-
-        function checkNodeActivations(hoverOffset = 0) {
-            const originX = canvas.width / 2 + tugOffsetX;
-            const originY = canvas.height / 2 + hoverOffset + tugOffsetY;
-            const energyWeb = renderables.find(r => r instanceof EnergyWeb);
-            if (!energyWeb) return;
-
-            renderables.forEach(r => {
-                if (r instanceof Node && !r.isActivated) {
-                    if (typeof r.x3d === 'number' && typeof r.y3d === 'number' && typeof r.z3d === 'number') {
-                        const nodeDist3D = Math.sqrt(r.x3d**2 + r.y3d**2 + r.z3d**2);
-                        const checkBranches = (branchList) => {
-                            for (const branch of branchList) {
-                                const branchDistFromOrigin = Math.sqrt(Math.pow(branch.originX-originX,2) + Math.pow(branch.originY-originY,2));
-                                if (branch.currentLength + branchDistFromOrigin >= nodeDist3D) {
-                                    r.isActivated = true;
-                                    return;
-                                }
-                                if (branch.children.length > 0) { checkBranches(branch.children); }
-                            }
-                        };
-                        checkBranches(energyWeb.branches);
-                    }
-                }
-            });
-        }
-        
         function init() {
-            stars = []; renderables = []; particles = []; dust = []; shootingStars = [];
-            isIntroAnimationDone = false;
-            introStartTime = null; beamStartTime = null;
-            
-            nebulaCanvas = createNebula();
-            if (!nebulaCanvas) {
-                console.error("Initialization failed: Could not create nebula canvas.");
-                return false; 
-            }
-
-            for (let i = 0; i < STAR_COUNT; i++) { stars.push(new Star()); }
-            for (let i = 0; i < DUST_COUNT; i++) { dust.push(new CosmicDust()); }
-
-            const nodes = Object.keys(serviceConfig).map(key => new Node(key, serviceConfig[key]));
-            const figure = new Figure();
-            const energyWeb = new EnergyWeb();
-
-            const subMenuItems = [
-                new PlantSubMenu('Creations', '', -Math.PI / 2, 'creations'),
-                new PlantSubMenu('Offerings', '', Math.PI * 1/6, 'offerings'),
-                new PlantSubMenu('Commune', '', Math.PI * 5/6, 'commune')
-            ];
-
-            renderables = [...nodes, figure, energyWeb, ...subMenuItems];
-            return true; 
+            renderables = []; shootingStars = []; orbitalContent = [];
+            nebulaCanvas = document.createElement('canvas'); nebulaCanvas.width = nebulaCanvas.height = 1024;
+            const nctx = nebulaCanvas.getContext('2d');
+            nctx.fillStyle = '#050505'; nctx.fillRect(0,0,1024,1024);
+            const stars = [], dust = [];
+            for(let i=0; i<STAR_COUNT; i++) stars.push(new Star());
+            for(let i=0; i<DUST_COUNT; i++) dust.push(new CosmicDust());
+            const nodes = serviceConfig.map((conf, i) => new Node(i, conf));
+            const fig = new Figure();
+            energyWebInstance = new EnergyWeb();
+            renderables = [...stars, ...dust, ...nodes, fig];
         }
 
-        function animate(timestamp) {
-            if (!nebulaCanvas || !nebulaCanvas.width || !nebulaCanvas.height) {
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                console.error("Animate loop running without a valid nebulaCanvas.");
-                requestAnimationFrame(animate); 
-                return;
+        function animate(t) {
+            ctx.fillStyle = '#000'; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+            let tProg = 1;
+            if (isTransitioning) {
+                const elap = t - transitionStartTime; tProg = Math.min(elap / transitionDuration, 1);
+                const ep = easeInOutCubic(tProg);
+                currentGlobalScale = lerp(globalScale, targetGlobalScale, ep);
+                currentRotationX = angleLerp(rotationX, targetRotationX, ep);
+                currentRotationY = angleLerp(rotationY, targetRotationY, ep);
+                if (tProg === 1) { 
+                    isTransitioning = false; globalScale = targetGlobalScale; 
+                    rotationX = targetRotationX; rotationY = targetRotationY;
+                    if(selectedNode) isInPlanetView = true; else isInPlanetView = false;
+                }
+            } else {
+                if (!isDragging && !isInPlanetView && !isPinching) rotationY += 0.0006;
+                currentGlobalScale = globalScale;
+                currentRotationX = isInPlanetView ? planetViewRotationX : rotationX;
+                currentRotationY = isInPlanetView ? planetViewRotationY : rotationY;
             }
 
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            if (!isDragging) rotationY += 0.0006;
-            
-            ctx.save();
-            ctx.globalAlpha = 0.5;
-            const nebulaRotation = timestamp * 0.00002;
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(rotationY / 5 + nebulaRotation);
-            ctx.drawImage(nebulaCanvas, -nebulaCanvas.width, -nebulaCanvas.height, nebulaCanvas.width * 2, nebulaCanvas.height * 2);
-            ctx.restore();
-
-            if (Math.random() > 0.992 && shootingStars.length < 3) {
-                shootingStars.push(new ShootingStar());
+            // --- AUTO HIGHLIGHT CYCLE LOGIC ---
+            if (isIntroAnimationDone && !isGlobalHighlightActive && !isInPlanetView && !isDragging) {
+                if (t - lastHighlightSwitchTime > highlightDuration) {
+                    autoHighlightIndex = (autoHighlightIndex + 1) % nodeCount;
+                    lastHighlightSwitchTime = t;
+                }
             }
-            shootingStars.forEach(s => { if (s && typeof s.update === 'function') s.update(); });
-            shootingStars = shootingStars.filter(s => s && s.alive);
-            shootingStars.forEach(s => { if (s && typeof s.draw === 'function') s.draw(ctx); });
 
+            if (nebulaCanvas) {
+                ctx.save(); ctx.globalAlpha = 0.5;
+                ctx.drawImage(nebulaCanvas, 0, 0, window.innerWidth, window.innerHeight);
+                ctx.restore();
+            }
 
-            stars.forEach(star => { 
-                if (star && typeof star.project === 'function') {
-                    star.project(rotationX, rotationY); 
-                    if (typeof star.draw === 'function') star.draw(); 
-                }
-            });
-            dust.forEach(d => { 
-                if (d && typeof d.project === 'function') {
-                    d.project(rotationX * 0.5, rotationY * 0.5); 
-                    if (typeof d.draw === 'function') d.draw();
-                }
-            });
-            
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
+            const dx = window.innerWidth/2 + tugOffsetX;
+            const dy = window.innerHeight/2 + tugOffsetY;
 
-            const easeFactor = 0.05;
-            tugOffsetX += (targetTugOffsetX - tugOffsetX) * easeFactor;
-            tugOffsetY += (targetTugOffsetY - tugOffsetY) * easeFactor;
-            currentFigureExtraScale += (targetFigureScale - currentFigureExtraScale) * easeFactor;
-            
-            const hoverOffset = isIntroAnimationDone ? Math.sin(timestamp / 1500) * 10 : 0;
-            const dynamicOriginX = centerX + tugOffsetX;
-            const dynamicOriginY = centerY + hoverOffset + tugOffsetY;
-
-            let currentFigureY = centerY;
-            let currentFigureScale = 0.5;
-            let easedProgress = 0;
-            const energyWeb = renderables.find(r => r instanceof EnergyWeb);
-
+            let iProg = 1;
             if (!isIntroAnimationDone) {
-                if (introStartTime === null) introStartTime = timestamp;
-                const elapsed = timestamp - introStartTime;
-                const progress = Math.min(elapsed / introDuration, 1);
-                easedProgress = easeInOutCubic(progress);
-                currentFigureY = lerp(canvas.height + 150, centerY, easedProgress); // Use lerp
-                currentFigureScale = lerp(0.05, 0.5, easedProgress); // Use lerp
-                if (progress === 1) {
-                    isIntroAnimationDone = true;
-                    beamStartTime = timestamp;
-                    if(energyWeb && typeof energyWeb.startGrowth === 'function') {
-                        energyWeb.startGrowth(); 
+                if (!introStartTime) introStartTime = t;
+                const elap = t - introStartTime; iProg = easeInOutCubic(Math.min(elap/introDuration, 1));
+                if (iProg === 1) { isIntroAnimationDone = true; energyWebInstance.startGrowth(); }
+            }
+
+            renderables.forEach(r => { if(r.project) r.project(currentRotationX, currentRotationY, currentGlobalScale); });
+            const fig = renderables.find(r => r instanceof Figure);
+
+            if (isInPlanetView && selectedNode) {
+                const img = planetImages[selectedNode.serviceKey];
+                const nodeConf = serviceConfig.find(c => c.key === selectedNode.serviceKey);
+                const planetHoverOffset = Math.sin(t / 2000) * 15;
+                const auraGrad = ctx.createRadialGradient(window.innerWidth/2, window.innerHeight/2 + planetHoverOffset, 50, window.innerWidth/2, window.innerHeight/2 + planetHoverOffset, 400);
+                auraGrad.addColorStop(0, nodeConf.colors[0] + '33'); auraGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = auraGrad; ctx.fillRect(0,0,window.innerWidth, window.innerHeight);
+                orbitalContent.forEach(o => o.project(planetViewRotationX, planetViewRotationY));
+                const sortedOrbitals = [...orbitalContent].sort((a,b) => b.rotatedZ - a.rotatedZ);
+                sortedOrbitals.filter(o => o.rotatedZ > 0).forEach(o => o.draw(t, planetHoverOffset));
+                if (img) {
+                    const h = window.innerHeight * 0.65; const w = img.width * (h / img.height);
+                    ctx.drawImage(img, window.innerWidth/2 - w/2, window.innerHeight/2 - h/2 + planetHoverOffset, w, h);
+                }
+                sortedOrbitals.filter(o => o.rotatedZ <= 0).forEach(o => o.draw(t, planetHoverOffset));
+                ctx.save(); ctx.fillStyle = 'white'; ctx.font = 'bold 2rem Segoe UI'; ctx.textAlign = 'center';
+                ctx.shadowBlur = 20; ctx.shadowColor = nodeConf.colors[0];
+                ctx.fillText(serviceData[selectedNode.serviceKey].title.toUpperCase(), window.innerWidth/2, 60);
+                ctx.restore();
+                exitPlanetViewButton.classList.add('visible');
+            } else {
+                exitPlanetViewButton.classList.remove('visible');
+                if (energyWebInstance && isIntroAnimationDone) energyWebInstance.draw(t, dx, dy, currentGlobalScale);
+                renderables.sort((a,b) => b.rotatedZ - a.rotatedZ).forEach(r => {
+                    if (r instanceof Figure) r.draw(t, iProg, currentFigureExtraScale, currentGlobalScale);
+                    else if (r instanceof Node) { 
+                        if (r !== selectedNode) { 
+                            r.isActivated = isIntroAnimationDone; 
+                            r.draw(t); 
+                        } 
                     }
-                }
-            }
-            
-            const figure = renderables.find(r => r instanceof Figure);
-            let figScreenX = dynamicOriginX;
-            let figScreenY = isIntroAnimationDone ? dynamicOriginY : currentFigureY;
-
-            renderables.forEach(r => { 
-                if(r && typeof r.project === 'function') {
-                    if (r instanceof Figure) {
-                        r.project(rotationX, rotationY, globalScale);
-                        if (isFinite(r.screenX) && isFinite(r.screenY)) {
-                            figScreenX = r.screenX + tugOffsetX;
-                            figScreenY = (isIntroAnimationDone ? r.screenY + tugOffsetY + hoverOffset : currentFigureY);
-                        }
-                    } else if (r instanceof PlantSubMenu) {
-                         // Defer
-                    } else {
-                        r.project(rotationX, rotationY, globalScale); 
-                    }
-                }
-            });
-
-            renderables.forEach(r => {
-                if (r instanceof PlantSubMenu && typeof r.project === 'function') {
-                    r.project(rotationX, rotationY, globalScale);
-                }
-            });
-            
-            renderables.sort((a,b) => (b.rotatedZ ?? -Infinity) - (a.rotatedZ ?? -Infinity)); 
-            
-            if (isIntroAnimationDone) {
-                if (beamStartTime !== null) {
-                    // ... beam drawing logic ...
-                }
-                
-                if (energyWeb && energyWeb.branches && typeof energyWeb.branches.length !== 'undefined' && Math.random() > 0.9) {
-                    // ... particle creation logic ...
-                }
-                checkNodeActivations(hoverOffset);
-            }
-            
-            // Unified Render Loop
-            renderables.forEach(r => {
-                if (!r || typeof r.draw !== 'function') return;
-
-                if (r instanceof EnergyWeb && isIntroAnimationDone) {
-                    r.draw(timestamp, dynamicOriginX, dynamicOriginY, globalScale);
-                } else if (r instanceof Figure) {
-                   r.draw(timestamp, dynamicOriginX, isIntroAnimationDone ? dynamicOriginY : currentFigureY, currentFigureScale, easedProgress, globalScale);
-                } else if (r instanceof Node) {
-                    r.draw(timestamp);
-                } else if (r instanceof PlantSubMenu) { 
-                    r.draw(timestamp, figScreenX, figScreenY, isSubMenuOpen, globalScale);
-                }
-            });
-
-            for(let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.update();
-                p.draw();
-                if(p.lifespan <= 0) {
-                    particles.splice(i, 1);
-                }
+                    else r.draw();
+                });
             }
 
+            const easeF = 0.05;
+            tugOffsetX += (targetTugOffsetX - tugOffsetX) * easeF;
+            tugOffsetY += (targetTugOffsetY - tugOffsetY) * easeF;
+            currentFigureExtraScale += (targetFigureScale - currentFigureExtraScale) * easeF;
             requestAnimationFrame(animate);
         }
 
-        function run() {
-            const initSuccess = init();
-            if (initSuccess) {
-                requestAnimationFrame(animate);
-            } else {
-                console.error("Run failed: Initialization was not successful.");
-                if (ctx) {
-                    ctx.fillStyle = 'red';
-                    ctx.font = '20px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText("Error: Could not initialize graphics. Please refresh.", canvas.width / 2, canvas.height / 2);
-                }
-            }
+        function run() { init(); requestAnimationFrame(animate); }
+
+        function getMousePos(e) {
+            if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return { x: e.clientX, y: e.clientY };
         }
 
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            run(); 
-        });
+        function getTouchDist(e) { return Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); }
 
-        window.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const zoomSpeed = 0.001;
-            const zoomAmount = e.deltaY * -zoomSpeed;
-            const minScale = 0.5;
-            const maxScale = 3.0; 
-            globalScale = Math.max(minScale, Math.min(maxScale, globalScale + zoomAmount));
-        }, { passive: false });
-
-        canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            hasDragged = false;
-            lastMouseX = e.clientX;
-            lastMouseY = e.clientY;
-        });
-
-        window.addEventListener('mousemove', (e) => {
+        function handleMove(e) {
+            if (isTransitioning) return;
+            if (e.touches && e.touches.length === 2) {
+                isPinching = true;
+                const currentDist = getTouchDist(e);
+                const ratio = currentDist / initialPinchDistance;
+                globalScale = Math.max(0.5, Math.min(4, initialPinchScale * ratio));
+                targetGlobalScale = globalScale;
+                return;
+            }
+            if (isPinching) return;
+            const pos = getMousePos(e);
             if (isDragging) {
-                const deltaX = e.clientX - lastMouseX;
-                const deltaY = e.clientY - lastMouseY;
-                if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
-                  hasDragged = true;
-                }
-
-                const rotationSpeed = 0.002;
-                rotationY += deltaX * rotationSpeed;
-                rotationX += deltaY * rotationSpeed;
-                lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
-
-                const pullX = e.clientX - canvas.width / 2;
-                const pullY = e.clientY - canvas.height / 2;
-                const pullStrength = 0.15;
-                targetTugOffsetX = pullX * pullStrength;
-                targetTugOffsetY = pullY * pullStrength;
+                const dx = pos.x - lastMouseX; const dy = pos.y - lastMouseY;
+                if (isInPlanetView) { planetViewRotationY += dx * 0.003; planetViewRotationX += dy * 0.003; }
+                else { rotationY += dx * 0.002; rotationX += dy * 0.002; targetTugOffsetX = (pos.x - window.innerWidth/2) * 0.1; targetTugOffsetY = (pos.y - window.innerHeight/2) * 0.1; }
+                lastMouseX = pos.x; lastMouseY = pos.y; hasDragged = true;
             }
 
-            let handledByNode = false;
-            renderables.forEach(r => {
-                if (r instanceof Node) {
-                    const dist = Math.sqrt((e.clientX - r.screenX)**2 + (e.clientY - r.screenY)**2);
-                    if (r.isActivated && dist < r.screenRadius * 1.2) {
-                        r.isHovered = true;
-                        handledByNode = true;
-                    } else {
-                        r.isHovered = false;
-                    }
-                }
-            });
-
-            let handledBySubMenu = false;
-            renderables.forEach(r => {
-                if (r instanceof PlantSubMenu) {
-                    if (r && typeof r.isMouseOver === 'function' && r.isMouseOver(e.clientX, e.clientY)) {
-                        r.isHovered = true;
-                        handledBySubMenu = true;
-                    } else if (r) {
-                        r.isHovered = false;
-                    }
-                }
-            });
-            
-            const fig = renderables.find(r => r instanceof Figure);
-            if (fig) { 
-                const scaledFigHeight = canvas.height * 0.5 * currentFigureExtraScale * globalScale; 
-                const scaledFigWidth = (centralFigureImage.naturalWidth || 1) * (scaledFigHeight / (centralFigureImage.naturalHeight || 1));
-                if (isFinite(fig.screenX) && isFinite(fig.screenY)) {
-                    const figRect = {
-                        x: (fig.screenX + tugOffsetX) - scaledFigWidth/2, 
-                        y: (fig.screenY + tugOffsetY + (isIntroAnimationDone ? Math.sin(Date.now() / 1500) * 10 : 0)) - scaledFigHeight/2,
-                        width: scaledFigWidth,
-                        height: scaledFigHeight
-                    };
-                    
-                    if (!handledByNode && isIntroAnimationDone && e.clientX > figRect.x && e.clientX < figRect.x + figRect.width &&
-                        e.clientY > figRect.y && e.clientY < figRect.y + figRect.height) {
-                        isHoveringFigure = true;
-                        targetFigureScale = 1.05;
-                    } else {
-                        isHoveringFigure = false;
-                        targetFigureScale = 1.0;
-                    }
-                } else {
-                    isHoveringFigure = false;
-                    targetFigureScale = 1.0;
-                }
+            let hovered = false;
+            if (isInPlanetView) {
+                const planetHoverOffset = Math.sin(performance.now() / 2000) * 15;
+                orbitalContent.forEach(o => {
+                    if (o.isMouseOver(pos.x, pos.y, planetHoverOffset)) { o.isHovered = true; hovered = true; }
+                    else o.isHovered = false;
+                });
             } else {
-                isHoveringFigure = false;
-                targetFigureScale = 1.0;
+                renderables.forEach(r => {
+                    if (r instanceof Node) r.isHovered = Math.sqrt((pos.x - r.screenX)**2 + (pos.y - r.screenY)**2) < r.screenRadius * 1.5;
+                    if (r.isHovered) hovered = true;
+                });
+                const fig = renderables.find(r => r instanceof Figure);
+                isHoveringFigure = fig && Math.sqrt((pos.x - (fig.screenX+tugOffsetX))**2 + (pos.y - (fig.screenY+tugOffsetY))**2) < 80;
+                if (isHoveringFigure) hovered = true;
+                targetFigureScale = isHoveringFigure ? 1.1 : 1.0;
             }
+            canvas.style.cursor = hovered ? 'pointer' : 'grab';
+        }
 
-            canvas.style.cursor = isHoveringFigure || handledByNode || handledBySubMenu ? 'pointer' : (isDragging ? 'grabbing' : 'grab');
-        });
+        function handleDown(e) {
+            if (isTransitioning) return;
+            if (e.touches && e.touches.length === 2) {
+                initialPinchDistance = getTouchDist(e); initialPinchScale = globalScale;
+                return;
+            }
+            const pos = getMousePos(e);
+            isDragging = true; hasDragged = false; lastMouseX = pos.x; lastMouseY = pos.y; 
+        }
 
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-            targetTugOffsetX = 0;
-            targetTugOffsetY = 0;
-        });
+        function handleUp() { isDragging = false; isPinching = false; targetTugOffsetX = targetTugOffsetY = 0; }
+
+        canvas.addEventListener('mousemove', handleMove);
+        canvas.addEventListener('mousedown', handleDown);
+        window.addEventListener('mouseup', handleUp);
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
+        canvas.addEventListener('touchstart', (e) => { handleDown(e); }, { passive: true });
+        window.addEventListener('touchend', handleUp);
+        canvas.addEventListener('wheel', e => { e.preventDefault(); globalScale = Math.max(0.5, Math.min(4, globalScale - e.deltaY * 0.001)); targetGlobalScale = globalScale; }, { passive: false });
         
         canvas.addEventListener('click', (e) => {
-             if (hasDragged) return;
-
-            if(isHoveringFigure) {
-                isSubMenuOpen = !isSubMenuOpen;
+            if (hasDragged || isTransitioning || isPinching) return;
+            const pos = getMousePos(e);
+            
+            if (isInPlanetView) {
+                const planetHoverOffset = Math.sin(performance.now() / 2000) * 15;
+                const orb = orbitalContent.find(o => o.isMouseOver(pos.x, pos.y, planetHoverOffset));
+                if (orb) {
+                    document.getElementById('modalTitle').innerText = orb.projectData.name;
+                    document.getElementById('modalDescription').innerText = orb.projectData.desc;
+                    document.getElementById('serviceModal').classList.add('active');
+                }
+                return;
             }
 
-            let subMenuItemClicked = false;
-            renderables.forEach(r => {
-                if (r instanceof PlantSubMenu && r.isHovered) {
-                    console.log(`Submenu item clicked: ${r.action}`);
-                    isSubMenuOpen = false; 
-                    subMenuItemClicked = true;
-                }
-            });
+            if (isHoveringFigure) {
+                isGlobalHighlightActive = !isGlobalHighlightActive;
+                return;
+            }
 
-            if (subMenuItemClicked) return;
-
-            renderables.forEach(r => {
-                if (r instanceof Node && r.isHovered) {
-                    const modal = document.getElementById('serviceModal');
-                    const modalContent = modal.querySelector('.modal-content');
-                    const modalTitle = document.getElementById('modalTitle');
-                    const modalDescription = document.getElementById('modalDescription');
-                    
-                    modalTitle.textContent = serviceData[r.serviceKey].title;
-                    modalDescription.textContent = serviceData[r.serviceKey].full;
-
-                    const gradient = `linear-gradient(45deg, ${r.colors[0]}, ${r.colors[1]})`;
-                    modalContent.style.borderColor = r.colors[0];
-                    modalContent.style.boxShadow = `0 0 40px ${r.colors[0]}, inset 0 0 15px ${r.colors[1]}a0`;
-
-                    modalTitle.style.background = gradient;
-                    modalTitle.style.webkitBackgroundClip = 'text';
-                    modalTitle.style.webkitTextFillColor = 'transparent';
-                    modalTitle.style.backgroundClip = 'text';
-                    
-                    modal.classList.add('active');
-                }
-            });
+            const node = renderables.find(r => r instanceof Node && r.isHovered);
+            if (node) {
+                selectedNode = node; isTransitioning = true; transitionStartTime = performance.now();
+                targetRotationY = -node.theta; targetRotationX = 0; targetGlobalScale = 2.5;
+                rotationX = currentRotationX; rotationY = currentRotationY; globalScale = currentGlobalScale;
+                orbitalContent = [];
+                const projects = serviceData[node.serviceKey].projects;
+                projects.forEach((p, i) => orbitalContent.push(new OrbitalContent(i, p)));
+            }
         });
 
-        const modal = document.getElementById('serviceModal');
-        const modalClose = document.getElementById('modalClose');
-        modalClose.addEventListener('click', () => { modal.classList.remove('active'); });
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) { modal.classList.remove('active'); }
-        });
+        exitPlanetViewButton.onclick = () => {
+            isTransitioning = true; transitionStartTime = performance.now();
+            targetRotationX = 0; targetRotationY = 0; targetGlobalScale = 1.0;
+            rotationX = currentRotationX; rotationY = currentRotationY; globalScale = currentGlobalScale;
+            selectedNode = null; isInPlanetView = false;
+        };
 
+        document.getElementById('modalClose').onclick = () => document.getElementById('serviceModal').classList.remove('active');
     </script>
 </body>
 </html>
+
