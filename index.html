@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmic Energy Canvas</title>
+    <title>Max Starr | Cosmic Portfolio</title>
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         :root {
             --gold-color: #ffc300;
+            --glass-bg: rgba(0, 0, 0, 0.7);
+            --glass-border: rgba(255, 195, 0, 0.3);
         }
 
         body { 
             margin: 0; 
             overflow: hidden; 
             background-color: #000; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
             color: #fff;
             touch-action: none; 
         }
@@ -25,92 +27,228 @@
             top: 0;
             left: 0;
             z-index: 1;
-            cursor: grab;
         }
-        canvas:active {
-            cursor: grabbing;
-        }
-        
-        #exitPlanetViewButton {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            padding: 10px 15px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 101; 
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
-        }
-         #exitPlanetViewButton.visible {
-             opacity: 1;
-             visibility: visible;
-         }
 
+        /* --- HUD Layout --- */
+        #ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .hud-element {
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        /* --- Top Bar: Branding --- */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo-area h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: 4px;
+            color: var(--gold-color);
+            text-transform: uppercase;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .logo-area h1:hover {
+            text-shadow: 0 0 15px var(--gold-color);
+            transform: scale(1.05);
+        }
+
+        /* --- Left Side: Category Index --- */
+        .side-nav {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto; /* CRITICAL FIX: Allow clicks on the sidebar */
+        }
+        .nav-item {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 8px 16px;
+            border-left: 2px solid transparent;
+            background: rgba(255,255,255,0.02);
+            border-radius: 0 4px 4px 0;
+            transform-origin: left center;
+        }
+        .nav-item:hover {
+            color: #fff;
+            background: rgba(255, 195, 0, 0.1);
+            border-left: 2px solid rgba(255, 195, 0, 0.8);
+            transform: scale(1.1) translateX(5px);
+            text-shadow: 0 0 10px var(--gold-color);
+        }
+        .nav-item.active {
+            color: var(--gold-color);
+            border-left: 2px solid var(--gold-color);
+            background: rgba(255, 195, 0, 0.15);
+            font-weight: bold;
+            transform: scale(1.05);
+        }
+
+        /* --- Right Side: Contextual Detail Panel --- */
+        #detail-panel {
+            position: absolute;
+            right: 30px;
+            top: 100px;
+            width: 320px;
+            max-height: calc(100% - 200px);
+            display: none; 
+            flex-direction: column;
+            animation: slideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(40px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        #detail-panel h2 { color: var(--gold-color); margin-top: 0; font-size: 1.2rem; letter-spacing: 1px; }
+        #detail-panel p { font-size: 0.85rem; line-height: 1.6; color: #bbb; margin-bottom: 20px; }
+        
+        .cta-button {
+            margin-top: auto;
+            background: var(--gold-color);
+            color: #000;
+            border: none;
+            padding: 14px;
+            border-radius: 6px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .cta-button:hover {
+            background: #fff;
+            box-shadow: 0 0 20px var(--gold-color);
+        }
+
+        #exitPlanetViewButton {
+            position: static;
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            transition: 0.2s;
+        }
+        #exitPlanetViewButton:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+
+        /* --- Modal --- */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center;
-            z-index: 300; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s ease; backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center;
+            z-index: 300; opacity: 0; visibility: hidden; transition: 0.4s;
         }
         .modal.active { opacity: 1; visibility: visible; }
         .modal-content {
             background: #0a0a0a;
-            border: 2px solid var(--gold-color);
-            width: 450px;
-            height: 450px;
-            max-width: 90vw;
-            max-height: 90vw;
-            border-radius: 50%;
-            padding: 30px;
-            box-sizing: border-box;
-            color: #eee;
-            box-shadow: 0 0 40px var(--gold-color), inset 0 0 15px rgba(255, 195, 0, 0.3);
-            position: relative;
-            transform: scale(0.8) rotate(-10deg);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+            border: 1px solid var(--gold-color);
+            width: 500px; max-width: 90vw;
+            padding: 40px; border-radius: 20px; text-align: center;
+            box-shadow: 0 0 40px rgba(0,0,0,1);
         }
-        .modal.active .modal-content { transform: scale(1) rotate(0deg); }
-        .modal-content h2 { margin-top: 0; margin-bottom: 15px; font-size: 1.8rem; color: var(--gold-color); }
-        .modal-content p { margin: 0; font-size: 14px; line-height: 1.5; }
-        .modal-close {
-            position: absolute;
-            top: 20%; right: 20%; transform: translate(50%, -50%);
-            font-size: 32px; font-weight: bold; color: #fff; cursor: pointer; transition: color 0.2s, transform 0.2s;
+        .modal-close { cursor: pointer; float: right; font-size: 2rem; color: var(--gold-color); margin-top: -30px; margin-right: -20px; }
+
+        @media (max-width: 768px) {
+            #detail-panel { right: 10px; left: 10px; width: auto; bottom: 30px; top: auto; }
+            .side-nav { left: 10px; padding: 10px; top: auto; bottom: 30px; transform: none; background: rgba(0,0,0,0.5); border-radius: 8px; }
         }
-        .modal-close:hover { color: #ffc300; transform: translate(50%, -50%) scale(1.2); }
     </style>
 </head>
 <body>
     <canvas id="cosmicCanvas"></canvas>
     
-    <button id="exitPlanetViewButton">Back to Overview</button>
+    <div id="ui-layer">
+        <div class="top-bar">
+            <div class="logo-area">
+                <h1 id="logo-title">MAX STARR</h1>
+            </div>
+            <div class="hud-element" style="padding: 10px 20px; font-size: 0.7rem; letter-spacing: 2px;">
+                SYSTEM STATUS: <span style="color: #0f0;">ACTIVE</span>
+            </div>
+        </div>
+
+        <div class="side-nav" id="side-nav">
+            <!-- Navigation items populated by JavaScript -->
+        </div>
+
+        <div id="detail-panel" class="hud-element pointer-events-auto">
+            <button id="exitPlanetViewButton">← GALAXY OVERVIEW</button>
+            <h2 id="panel-title">MISSION BRIEFING</h2>
+            <p id="panel-desc">Awaiting category selection...</p>
+            <div id="panel-services" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; font-size: 0.8rem; color: #888;">
+                Click project sparks to view artifacts.
+            </div>
+            <button class="cta-button">Initialize Inquiry</button>
+        </div>
+    </div>
 
     <div class="modal" id="serviceModal">
         <div class="modal-content">
             <span class="modal-close" id="modalClose">&times;</span>
-            <h2 id="modalTitle"></h2>
-            <p id="modalDescription"></p>
+            <h2 id="modalTitle" style="color: var(--gold-color);"></h2>
+            <p id="modalDescription" style="color: #ccc; line-height: 1.6;"></p>
         </div>
     </div>
 
     <script>
+        // --- Utilities ---
+        const lerp = (start, end, t) => start * (1 - t) + end * t;
+        const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        const angleLerp = (start, end, t) => {
+            const delta = end - start;
+            const shortestAngle = ((delta + Math.PI) % (Math.PI * 2)) - Math.PI;
+            return start + shortestAngle * t;
+        };
+
         const canvas = document.getElementById('cosmicCanvas');
         const ctx = canvas.getContext('2d');
-        const exitPlanetViewButton = document.getElementById('exitPlanetViewButton');
+        const exitBtn = document.getElementById('exitPlanetViewButton');
+        const detailPanel = document.getElementById('detail-panel');
+        const sideNav = document.getElementById('side-nav');
+        const logoTitle = document.getElementById('logo-title');
         
+        const introDuration = 2500;
+        const transitionDuration = 1200;
+
         let dpr = window.devicePixelRatio || 1;
-        
-        function resizeCanvas() {
+        function resize() {
             dpr = window.devicePixelRatio || 1;
             canvas.width = window.innerWidth * dpr;
             canvas.height = window.innerHeight * dpr;
@@ -118,592 +256,393 @@
             canvas.style.height = window.innerHeight + 'px';
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0); 
         }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        window.addEventListener('resize', resize);
+        resize();
 
         const centralFigureImage = new Image();
-        let imageFailedToLoad = false;
         centralFigureImage.crossOrigin = "Anonymous"; 
-        centralFigureImage.onload = () => { preloader.itemLoaded('figure'); }; 
-        centralFigureImage.onerror = () => { imageFailedToLoad = true; preloader.itemLoaded('figure'); }; 
+        centralFigureImage.onload = () => { preloader.itemLoaded(); }; 
         centralFigureImage.src = 'https://i.imgur.com/Zclc7ji.png';
 
-        let renderables = [], particles = [], shootingStars = [], orbitalContent = []; 
-        let energyWebInstance = null; 
+        let renderables = [], shootingStars = [], orbitalContent = []; 
         let nebulaCanvas = null; 
-        const STAR_COUNT = 400; 
-        const DUST_COUNT = 80;
-        const BRANCH_COUNT = 30;
+        const STAR_COUNT = 300; 
         const GOLD_COLOR = '#ffc300';
-        const DARK_GOLD_COLOR = '#ff9400';
         
-        let globalScale = 1.0; 
-        let targetGlobalScale = 1.0; 
-        let currentGlobalScale = 1.0; 
-        const overviewScale = 1.0;
-        const planetViewScale = 2.5; 
-        const transitionDuration = 1200; 
-        
-        let isDragging = false;
-        let hasDragged = false;
-        let lastMouseX = 0, lastMouseY = 0;
-        
-        let rotationX = 0, rotationY = 0; 
-        let targetRotationX = 0, targetRotationY = 0; 
-        let currentRotationX = 0, currentRotationY = 0; 
-        
+        let globalScale = 1.0, targetGlobalScale = 1.0, currentGlobalScale = 1.0;
+        let rotationX = 0, rotationY = 0, targetRotationX = 0, targetRotationY = 0, currentRotationX = 0, currentRotationY = 0;
         let planetViewRotationX = 0, planetViewRotationY = 0; 
-        
-        let tugOffsetX = 0, tugOffsetY = 0;
-        let targetTugOffsetX = 0, targetTugOffsetY = 0;
-        let isIntroAnimationDone = false;
-        const introDuration = 2500; 
-        let introStartTime = null;
-        let beamStartTime = null;
-        let isHoveringFigure = false;
-        let targetFigureScale = 1.0; 
-        let currentFigureExtraScale = 1.0; 
+        let tugOffsetX = 0, tugOffsetY = 0, targetTugOffsetX = 0, targetTugOffsetY = 0;
+        let isIntroAnimationDone = false, introStartTime = null;
+        let isHoveringFigure = false, targetFigureScale = 1.0, currentFigureExtraScale = 1.0; 
+        let isInPlanetView = false, isTransitioning = false, transitionStartTime = 0, selectedNode = null;
+        let isGlobalHighlightActive = false, autoHighlightIndex = 0, lastHighlightSwitchTime = 0;
+        const highlightDuration = 2000;
 
-        let isInPlanetView = false;
-        let isTransitioning = false; 
-        let transitionStartTime = 0;
-        let selectedNode = null;
-
-        // Discovery Cycle Variables
-        let isGlobalHighlightActive = false; // Toggled by clicking AxStarr
-        let autoHighlightIndex = 0;
-        let lastHighlightSwitchTime = 0;
-        const highlightDuration = 1800; // Time each node stays highlighted in the loop
-
-        let initialPinchDistance = 0;
-        let initialPinchScale = 1;
-        let isPinching = false;
-        
         const planetImages = {};
         const planetImageUrls = {
-            'ai': 'https://i.imgur.com/f8FBfYn.png', 
-            'music': 'https://i.imgur.com/oyX9xlj.png',
-            'engineering': 'https://i.imgur.com/jC0v2Fu.png',
-            'design': 'https://i.imgur.com/fxWzyvJ.png', 
-            'media': 'https://i.imgur.com/KTdve2W.png',
-            'culture': 'https://i.imgur.com/T62UBRM.png',
-            'uni': 'https://i.imgur.com/YfbTPyn.png',
-            'starrt': 'https://i.imgur.com/BLfWiVI.png',
+            'ai': 'https://i.imgur.com/f8FBfYn.png', 'music': 'https://i.imgur.com/oyX9xlj.png',
+            'engineering': 'https://i.imgur.com/jC0v2Fu.png', 'design': 'https://i.imgur.com/fxWzyvJ.png', 
+            'media': 'https://i.imgur.com/KTdve2W.png', 'culture': 'https://i.imgur.com/T62UBRM.png',
+            'uni': 'https://i.imgur.com/YfbTPyn.png', 'starrt': 'https://i.imgur.com/BLfWiVI.png',
             'legacy': 'https://i.imgur.com/zqAGxmw.png'
         };
-        const totalItemsToLoad = Object.keys(planetImageUrls).length + 1; 
 
         const preloader = {
             loadedCount: 0,
-            itemLoaded: function(itemName) {
+            itemLoaded: function() {
                 this.loadedCount++;
-                if (this.loadedCount === totalItemsToLoad) run(); 
+                if (this.loadedCount === Object.keys(planetImageUrls).length + 1) run(); 
             }
         };
 
         Object.keys(planetImageUrls).forEach(key => {
             planetImages[key] = new Image();
             planetImages[key].crossOrigin = "Anonymous";
-            planetImages[key].onload = () => preloader.itemLoaded(key);
-            planetImages[key].onerror = () => preloader.itemLoaded(key);
+            planetImages[key].onload = () => preloader.itemLoaded();
             planetImages[key].src = planetImageUrls[key];
         });
 
         const serviceData = {
-            music: { title: "Music", projects: [
-                { name: "Vocal Preset Pack v1", desc: "Studio-quality Bandlab presets for modern rappers." },
-                { name: "Brand Theme Engine", desc: "Bespoke sonic signatures for luxury brands." },
-                { name: "AxStarr Ambient", desc: "Generative soundscapes for focus and meditation." }
-            ]},
-            ai: { title: "AI", projects: [
-                { name: "GPT Persona Architect", desc: "Customized AI agents with distinct creative personalities." },
-                { name: "Neural Art Pipeline", desc: "Automated generative image generation for fast prototyping." },
-                { name: "Workflow Automator", desc: "Smart systems that take over repetitive creative tasks." }
-            ]},
-            design: { title: "Art", projects: [
-                { name: "VR Gallery Experience", desc: "A walk-through museum of digital artifacts." },
-                { name: "Cyber-Identity Kit", desc: "Futuristic branding and social media assets." },
-                { name: "Holographic Posters", desc: "Motion-based poster designs for virtual events." }
-            ]},
-            engineering: { title: "Engineering", projects: [
-                { name: "Launchpad Framework", desc: "A high-performance stack for rapid startup deployment." },
-                { name: "Starrt Engine v2", desc: "Backend architecture for data-driven applications." },
-                { name: "Smart UI Components", desc: "Reactive 3D-integrated frontend library." }
-            ]},
-            media: { title: "Media", projects: [
-                { name: "AI Ad Generator", desc: "Dynamic video advertisements powered by AI narrative engines." },
-                { name: "Lyric Visualizers", desc: "Music videos that react in real-time to audio frequencies." },
-                { name: "Immersive Documentaries", desc: "Mixed-media storytelling about technology and culture." }
-            ]},
-            culture: { title: "Culture", projects: [
-                { name: "Modern Folklore Archive", desc: "Mapping current digital trends to ancient myths." },
-                { name: "The Global Nomad", desc: "A social initiative for location-independent creatives." },
-                { name: "Tech-Tradition Fusion", desc: "Product designs blending artisanal craft with high-tech." }
-            ]},
-            uni: { title: "U.N.I.", projects: [
-                { name: "Universal Network Hub", desc: "Cross-platform workspace for remote teams." },
-                { name: "Creative ID System", desc: "A unified verified profile for the creative industry." },
-                { name: "Collab Stream", desc: "Real-time collaborative drafting tool for writers." }
-            ]},
-            starrt: { title: "STARRT-UPS", projects: [
-                { name: "Founder Accelerator", desc: "Mentorship and funding for zero-to-one startups." },
-                { name: "Rapid Proto Lab", desc: "Turn a napkin sketch into a prototype in 48 hours." },
-                { name: "Pitch Visualizer", desc: "Turn spreadsheets into compelling investor stories." }
-            ]},
-            legacy: { title: "Legacy", projects: [
-                { name: "Digital Heirloom Vault", desc: "Encrypted storage intended to last for 100 years." },
-                { name: "Asset Preservation", desc: "Strategies for protecting intellectual property long-term." },
-                { name: "Future-Proof Records", desc: "Blockchain-based logging for historical creative milestones." }
-            ]},
+            music: { title: "Music Production", desc: "Crafting bespoke sonic identities. From high-end vocal presets to full cinematic scoring.", projects: [{ name: "Vocal Presets", desc: "Studio-grade chains for modern artists." }, { name: "Theme Scoring", desc: "Unique brand signatures through sound." }]},
+            ai: { title: "Artificial Intelligence", desc: "Architecting custom GPTs and neural automation workflows to augment human creativity.", projects: [{ name: "GPT Architects", desc: "Custom LLM personalities." }, { name: "Neural Pipelines", desc: "Generative content automation." }]},
+            design: { title: "Creative Design", desc: "Digital storytelling through visual mastery, motion graphics, and 3D brand environments.", projects: [{ name: "VR Environments", desc: "Immersive digital artifacts." }, { name: "Motion Branding", desc: "Visuals that tell a story." }]},
+            engineering: { title: "Full-Stack Engineering", desc: "Building the digital backbone for modern startups using cutting-edge performant tech.", projects: [{ name: "SaaS Launchpad", desc: "Rapid framework for tech ventures." }, { name: "Reactive UIs", desc: "High-performance web apps." }]},
+            media: { title: "Media Production", desc: "High-impact video advertising and immersive digital campaigns designed to capture focus.", projects: [{ name: "Ad Generators", desc: "AI-powered narrative ads." }, { name: "Visualizers", desc: "Real-time reactive music videos." }]},
+            culture: { title: "Culture & Identity", desc: "Exploring the intersection of tradition, innovation, and modern global folklore.", projects: [{ name: "Folklore Archive", desc: "Mapping myths to digital trends." }, { name: "Nomad Network", desc: "Social initiatives for creatives." }]},
+            uni: { title: "U.N.I. Systems", desc: "Unified professional systems and collaborative networks for decentralized creative teams.", projects: [{ name: "Network Hubs", desc: "Cross-platform team workspaces." }, { name: "Unified ID", desc: "Creative industry verification." }]},
+            starrt: { title: "STARRT-UPS", desc: "Accelerator and rapid prototyping. Turning zero-to-one concepts into market-ready assets.", projects: [{ name: "Founder Mentoring", desc: "Funding and strategy for startups." }, { name: "Proto-Lab", desc: "48-hour rapid prototyping." }]},
+            legacy: { title: "Legacy Architecture", desc: "Building digital assets intended to stand the test of time through secure preservation.", projects: [{ name: "Heirloom Vault", desc: "100-year encrypted storage." }, { name: "Asset Preservation", desc: "IP protection strategies." }]},
         };
         
-        const nodeCount = 9;
         const serviceConfig = [
-            { key: 'ai', theta: (Math.PI * 2 / nodeCount) * 0, phi: Math.PI * 0.5, colors: ['#00AADD', '#00FFFF'], icon: '\uf544' },
-            { key: 'design', theta: (Math.PI * 2 / nodeCount) * 1, phi: Math.PI * 0.5, colors: ['#FF00FF', '#FFFF00'], icon: '\uf1fc' }, 
-            { key: 'engineering', theta: (Math.PI * 2 / nodeCount) * 2, phi: Math.PI * 0.5, colors: ['#4B4B4B', '#B87333'], icon: '\uf085' },
-            { key: 'music', theta: (Math.PI * 2 / nodeCount) * 3, phi: Math.PI * 0.5, colors: ['#1DB954', '#8A2BE2'], icon: '\uf001' },
-            { key: 'media', theta: (Math.PI * 2 / nodeCount) * 4, phi: Math.PI * 0.5, colors: ['#FF6347', '#FFD700'], icon: '\uf03d' }, 
-            { key: 'culture', theta: (Math.PI * 2 / nodeCount) * 5, phi: Math.PI * 0.5, colors: ['#DAA520', '#F4A460'], icon: '\uf1ce' }, 
-            { key: 'uni', theta: (Math.PI * 2 / nodeCount) * 6, phi: Math.PI * 0.5, colors: ['#FFFFFF', '#87CEEB'], icon: '\uf549' }, 
-            { key: 'starrt', theta: (Math.PI * 2 / nodeCount) * 7, phi: Math.PI * 0.5, colors: ['#FF4500', '#FF8C00'], icon: '\uf135' }, 
-            { key: 'legacy', theta: (Math.PI * 2 / nodeCount) * 8, phi: Math.PI * 0.5, colors: ['#C0C0C0', '#FFFAF0'], icon: '\uf1b3' }, 
+            { key: 'ai', theta: (Math.PI * 2 / 9) * 0, phi: Math.PI * 0.5, colors: ['#00AADD', '#00FFFF'], icon: '\uf544' },
+            { key: 'design', theta: (Math.PI * 2 / 9) * 1, phi: Math.PI * 0.5, colors: ['#FF00FF', '#FFFF00'], icon: '\uf1fc' }, 
+            { key: 'engineering', theta: (Math.PI * 2 / 9) * 2, phi: Math.PI * 0.5, colors: ['#4B4B4B', '#B87333'], icon: '\uf085' },
+            { key: 'music', theta: (Math.PI * 2 / 9) * 3, phi: Math.PI * 0.5, colors: ['#1DB954', '#8A2BE2'], icon: '\uf001' },
+            { key: 'media', theta: (Math.PI * 2 / 9) * 4, phi: Math.PI * 0.5, colors: ['#FF6347', '#FFD700'], icon: '\uf03d' }, 
+            { key: 'culture', theta: (Math.PI * 2 / 9) * 5, phi: Math.PI * 0.5, colors: ['#DAA520', '#F4A460'], icon: '\uf1ce' }, 
+            { key: 'uni', theta: (Math.PI * 2 / 9) * 6, phi: Math.PI * 0.5, colors: ['#FFFFFF', '#87CEEB'], icon: '\uf549' }, 
+            { key: 'starrt', theta: (Math.PI * 2 / 9) * 7, phi: Math.PI * 0.5, colors: ['#FF4500', '#FF8C00'], icon: '\uf135' }, 
+            { key: 'legacy', theta: (Math.PI * 2 / 9) * 8, phi: Math.PI * 0.5, colors: ['#C0C0C0', '#FFFAF0'], icon: '\uf1b3' }, 
         ];
 
-        function lerp(start, end, t) { return start * (1 - t) + end * t; }
-        function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
-        function angleLerp(start, end, t) {
-            const delta = end - start;
-            const shortestAngle = ((delta + Math.PI) % (Math.PI * 2)) - Math.PI;
-            return start + shortestAngle * t;
-        }
-
         class Projectable {
-            constructor() {
-                this.x3d = 0; this.y3d = 0; this.z3d = 0;
-                this.rotatedX = 0; this.rotatedY = 0; this.rotatedZ = 0;
-                this.screenX = 0; this.screenY = 0; this.scale = 1; this.alpha = 1;
-            }
-            project(rotX, rotY, zoomScale = 1) {
-                const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
-                const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
-                const tX = this.x3d * cosY - this.z3d * sinY;
-                const tZ = this.x3d * sinY + this.z3d * cosY;
-                this.rotatedX = tX;
-                this.rotatedY = this.y3d * cosX - tZ * sinX;
-                this.rotatedZ = this.y3d * sinX + tZ * cosX;
-                const perspective = window.innerWidth * 0.8;
-                const effZ = perspective + this.rotatedZ;
-                if (effZ <= 0) { this.scale = 0; } else {
-                    this.scale = perspective / effZ;
-                    this.screenX = window.innerWidth / 2 + this.rotatedX * this.scale;
-                    this.screenY = window.innerHeight / 2 + this.rotatedY * this.scale;
+            constructor() { this.x3d=0; this.y3d=0; this.z3d=0; this.rotatedZ=0; this.screenX=0; this.screenY=0; this.scale=1; }
+            project(rx, ry, zs) {
+                const cy=Math.cos(ry), sy=Math.sin(ry), cx=Math.cos(rx), sx=Math.sin(rx);
+                const tx = this.x3d*cy - this.z3d*sy, tz = this.x3d*sy + this.z3d*cy;
+                this.rotatedZ = this.y3d*sx + tz*cx;
+                const perspective = window.innerWidth * 0.8, effZ = perspective + this.rotatedZ;
+                if (effZ<=0) { this.scale=0; } else {
+                    this.scale = perspective/effZ;
+                    this.screenX = window.innerWidth/2 + tx*this.scale;
+                    this.screenY = window.innerHeight/2 + (this.y3d*cx - tz*sx)*this.scale;
                 }
             }
         }
 
         class Star extends Projectable {
-            constructor() {
-                super();
-                this.radius3d = Math.random() * (window.innerWidth * 1.5) + (window.innerWidth * 0.3);
-                const theta = Math.random() * 2 * Math.PI;
-                const phi = Math.acos((Math.random() * 2) - 1);
-                this.x3d = this.radius3d * Math.sin(phi) * Math.cos(theta);
-                this.y3d = this.radius3d * Math.sin(phi) * Math.sin(theta);
-                this.z3d = this.radius3d * Math.cos(phi);
-                this.originalRadius = Math.random() * 1.2 + 0.5;
-            }
-            project(rotX, rotY, zoomScale) {
-                super.project(rotX, rotY, zoomScale);
-                this.screenRadius = this.originalRadius * this.scale;
-                this.alpha = this.scale > 0 ? (this.rotatedZ + this.radius3d) / (this.radius3d * 2) : 0;
-            }
-            draw() {
-                if (this.scale <= 0) return;
-                ctx.beginPath(); ctx.arc(this.screenX, this.screenY, this.screenRadius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, this.alpha)})`; ctx.fill();
-            }
-        }
-
-        class CosmicDust extends Star {
-            constructor() {
-                super();
-                this.radius3d = Math.random() * (window.innerWidth * 0.5) + (window.innerWidth * 0.1);
-                this.color = `hsl(${Math.random() * 60 + 200}, 100%, 80%)`;
-            }
-            draw() {
-                if (this.scale <= 0) return;
-                ctx.beginPath(); ctx.arc(this.screenX, this.screenY, this.screenRadius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.alpha * 0.7); ctx.fill(); ctx.globalAlpha = 1;
-            }
+            constructor() { super(); this.radius3d = Math.random()*window.innerWidth*1.5 + window.innerWidth*0.3; const t=Math.random()*Math.PI*2, p=Math.acos(Math.random()*2-1); this.x3d=this.radius3d*Math.sin(p)*Math.cos(t); this.y3d=this.radius3d*Math.sin(p)*Math.sin(t); this.z3d=this.radius3d*Math.cos(p); this.r=Math.random()*1.2+0.5; }
+            draw() { if(this.scale<=0)return; ctx.beginPath(); ctx.arc(this.screenX, this.screenY, this.r*this.scale, 0, Math.PI*2); ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(this.rotatedZ+this.radius3d)/(this.radius3d*2))})`; ctx.fill(); }
         }
 
         class Node extends Star {
-            constructor(idx, config) {
-                super();
-                this.idx = idx;
-                this.baseRadius3d = Math.min(window.innerWidth, window.innerHeight) * 0.45;
-                this.theta = config.theta; this.phi = config.phi;
-                this.originalRadius = 22;
-                this.serviceKey = config.key; this.colors = config.colors; this.icon = config.icon;
-                this.isActivated = false; this.isHovered = false; this.activationProgress = 0;
+            constructor(idx, conf) { 
+                super(); 
+                this.idx=idx; 
+                this.key=conf.key; 
+                this.theta=conf.theta; 
+                this.phi=conf.phi; 
+                this.colors=conf.colors; 
+                this.icon=conf.icon; 
+                this.isActivated=false; 
+                this.isHovered=false; 
+                this.screenRadius = 22; 
             }
-            project(rotX, rotY, zoomScale) {
-                const pFactor = 0.6;
-                const rFactor = Math.min(window.innerWidth, window.innerHeight) * 0.45;
-                this.radius3d = rFactor * (1 + (zoomScale - 1) * pFactor);
-                this.x3d = this.radius3d * Math.sin(this.phi) * Math.cos(this.theta);
-                this.y3d = this.radius3d * Math.sin(this.phi) * Math.sin(this.theta);
-                this.z3d = this.radius3d * Math.cos(this.phi);
-                super.project(rotX, rotY, zoomScale);
-                this.screenRadius *= (1 + (zoomScale - 1) * 0.2);
+            project(rx, ry, zs) { 
+                const r = Math.min(window.innerWidth, window.innerHeight)*0.45 * (1+(zs-1)*0.6);
+                this.x3d=r*Math.sin(this.phi)*Math.cos(this.theta); this.y3d=r*Math.sin(this.phi)*Math.sin(this.theta); this.z3d=r*Math.cos(this.phi);
+                super.project(rx, ry, zs); 
+                const active = isGlobalHighlightActive || (autoHighlightIndex === this.idx) || this.isHovered;
+                this.screenRadius = (active ? 30 : 22) * this.scale;
             }
-            draw(timestamp) {
-                if (this.activationProgress < 1 && this.isActivated) this.activationProgress += 0.05;
-                const cScale = easeInOutCubic(this.activationProgress);
-                if (!this.isActivated || this.scale <= 0) return;
-                
-                // --- Logic: Is this node currently highlighted? ---
-                const isAutoHighlighted = !isGlobalHighlightActive && (this.idx === autoHighlightIndex);
-                const isEffectiveHighlight = isGlobalHighlightActive || isAutoHighlighted || this.isHovered;
-
-                const pulse = isEffectiveHighlight ? 1.3 : 1 + Math.sin(timestamp / 500) * 0.05;
-                const finalRadius = this.screenRadius * cScale * pulse;
-                if (finalRadius <= 0) return;
-
+            draw(t) {
+                if(!this.isActivated || this.scale<=0) return;
+                const active = isGlobalHighlightActive || (autoHighlightIndex === this.idx) || this.isHovered;
+                const baseSize = active ? 30 : 22;
+                const size = baseSize * this.scale * (1+Math.sin(t/500)*0.05);
                 ctx.save();
-                // Enhanced glow for active nodes
-                if (isEffectiveHighlight) {
-                    ctx.shadowBlur = 20;
-                    ctx.shadowColor = this.colors[1];
+                if(active) { 
+                    ctx.shadowBlur = 20 + (this.isHovered ? 15 : 0);
+                    ctx.shadowColor = this.colors[1]; 
                 }
-
-                const bodyGrad = ctx.createRadialGradient(this.screenX - finalRadius*0.2, this.screenY - finalRadius*0.2, finalRadius*0.1, this.screenX, this.screenY, finalRadius);
-                bodyGrad.addColorStop(0, this.colors[0]); bodyGrad.addColorStop(1, this.colors[1]);
-                ctx.fillStyle = bodyGrad; ctx.beginPath(); ctx.arc(this.screenX, this.screenY, finalRadius, 0, Math.PI * 2); ctx.fill();
-
-                ctx.font = `900 ${finalRadius * 0.8}px "Font Awesome 5 Free"`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
-                ctx.fillText(this.icon, this.screenX, this.screenY);
-                
-                // --- Logic: Show titles permanently in highlight mode ---
-                if (isEffectiveHighlight && !isInPlanetView && !isTransitioning) {
-                    ctx.font = `bold ${finalRadius * 0.6}px Segoe UI`;
-                    ctx.fillStyle = '#ffffff'; 
-                    ctx.shadowColor = 'black'; ctx.shadowBlur = 10;
-                    ctx.fillText(serviceData[this.serviceKey].title, this.screenX, this.screenY + finalRadius * 1.8);
+                const g = ctx.createRadialGradient(this.screenX-size*0.2, this.screenY-size*0.2, size*0.1, this.screenX, this.screenY, size);
+                g.addColorStop(0, this.colors[0]); g.addColorStop(1, this.colors[1]);
+                ctx.fillStyle=g; ctx.beginPath(); ctx.arc(this.screenX, this.screenY, size, 0, Math.PI*2); ctx.fill();
+                ctx.font=`900 ${size*0.8}px "Font Awesome 5 Free"`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff'; ctx.fillText(this.icon, this.screenX, this.screenY);
+                if(active && !isInPlanetView) {
+                    ctx.font=`bold ${size*0.6}px Segoe UI`; ctx.fillStyle='#fff'; ctx.shadowColor='#000'; ctx.shadowBlur=10;
+                    ctx.fillText(serviceData[this.key].title.split(' ')[0], this.screenX, this.screenY+size*1.8);
                 }
                 ctx.restore();
             }
         }
 
         class Figure extends Projectable {
-            constructor() { super(); this.baseScale = 0.5; this.rotatedZ = 0; }
-            project(rotX, rotY, zoomScale) { super.project(0, 0, zoomScale); }
-            draw(timestamp, prog, hScale, zScale) {
-                if (imageFailedToLoad || !centralFigureImage.complete) return;
-                const effZ = zScale; 
-                const finalScale = this.baseScale * hScale * effZ * lerp(0.05, 1, prog);
-                const figH = window.innerHeight * finalScale;
-                const figW = centralFigureImage.naturalWidth * (figH / centralFigureImage.naturalHeight);
-                const yOff = isIntroAnimationDone ? Math.sin(timestamp / 1500) * 10 : 0;
-                const drawX = this.screenX + tugOffsetX - figW / 2;
-                const drawY = lerp(window.innerHeight + 150, this.screenY + tugOffsetY + yOff, prog) - figH / 2;
-                ctx.save();
-                ctx.globalAlpha = prog;
-                ctx.filter = `drop-shadow(0 0 15px ${GOLD_COLOR}) drop-shadow(0 0 30px ${DARK_GOLD_COLOR})`;
-                ctx.drawImage(centralFigureImage, drawX, drawY, figW, figH);
+            constructor() { super(); this.baseScale=0.5; }
+            project(rx, ry, zs) { super.project(0,0,zs); }
+            draw(t, prog, hScale, zScale) {
+                const s = this.baseScale*hScale*zScale*lerp(0.05, 1, prog);
+                const h = window.innerHeight*s, w = centralFigureImage.width*(h/centralFigureImage.height);
+                const yOff = isIntroAnimationDone ? Math.sin(t/1500)*10 : 0;
+                ctx.save(); ctx.globalAlpha=prog; ctx.filter=`drop-shadow(0 0 15px ${GOLD_COLOR})`;
+                ctx.drawImage(centralFigureImage, this.screenX+tugOffsetX-w/2, lerp(window.innerHeight+150, this.screenY+tugOffsetY+yOff, prog)-h/2, w, h);
                 ctx.restore();
             }
         }
 
-        class EnergyWeb {
-            constructor() { this.branches = []; this.rotatedZ = 1000; }
-            startGrowth() {
-                const cX = window.innerWidth / 2, cY = window.innerHeight / 2;
-                for (let i = 0; i < BRANCH_COUNT; i++) {
-                    const ang = (Math.PI * 2 / BRANCH_COUNT) * i;
-                    this.branches.push(new Branch(cX + 100 * Math.cos(ang), cY + 100 * Math.sin(ang), ang, 2));
-                }
-            }
-            draw(t, dx, dy, zs) {
-                ctx.save(); ctx.translate(dx, dy); ctx.scale(zs, zs); ctx.translate(-dx, -dy);
-                ctx.strokeStyle = GOLD_COLOR; ctx.shadowBlur = 10; ctx.shadowColor = GOLD_COLOR;
-                this.branches.forEach(b => { b.update(t); b.grow(); b.draw(dx, dy); });
+        class OrbitalSpark extends Star {
+            constructor(idx, data) { super(); this.idx=idx; this.data=data; this.theta=(Math.PI*2/3)*idx; this.phi=Math.PI*0.5; this.r3d=window.innerWidth*0.45; }
+            project(rx, ry) { this.x3d=this.r3d*Math.cos(this.theta); this.y3d=this.r3d*Math.sin(this.theta); this.z3d=0; super.project(rx,ry,1); }
+            draw(t, hY) {
+                if(this.scale<=0)return;
+                const s = (4+Math.sin(t/100+this.idx))*this.scale;
+                ctx.save(); ctx.shadowBlur=10; ctx.shadowColor='#fff'; ctx.fillStyle='#FFFACD';
+                ctx.beginPath(); ctx.arc(this.screenX, this.screenY+hY*0.5, s, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.font=`bold ${12*this.scale}px Segoe UI`; ctx.textAlign='center';
+                ctx.shadowColor='#000'; ctx.shadowBlur=5; ctx.fillText(this.data.name, this.screenX, this.screenY+hY*0.5+25);
                 ctx.restore();
             }
-        }
-
-        class Branch {
-            constructor(x, y, ang, dep) {
-                this.ox = x; this.oy = y; this.ang = ang; this.dep = dep;
-                this.maxL = Math.random() * 150 + 100; this.curL = 0; this.grown = false; this.kids = [];
-            }
-            update(t) { this.ex = this.ox + this.curL * Math.cos(this.ang); this.ey = this.oy + this.curL * Math.sin(this.ang); }
-            grow() {
-                if (this.curL < this.maxL) this.curL += 2;
-                else if (!this.grown && this.dep > 0) {
-                    this.grown = true;
-                    this.kids.push(new Branch(this.ex, this.ey, this.ang - 0.4, this.dep - 1), new Branch(this.ex, this.ey, this.ang + 0.4, this.dep - 1));
-                }
-                this.kids.forEach(k => k.grow());
-            }
-            draw(px, py) {
-                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(this.ex, this.ey); ctx.stroke();
-                this.kids.forEach(k => k.draw(this.ex, this.ey));
-            }
-        }
-
-        class OrbitalContent extends Star {
-            constructor(idx, projectData) {
-                super(); 
-                this.idx = idx; 
-                this.projectData = projectData;
-                this.radius3d = window.innerWidth * 0.45; 
-                const step = (Math.PI * 2) / 3; 
-                this.theta = step * idx; this.phi = Math.PI * 0.5;
-                this.update3DPos();
-            }
-            update3DPos() { this.x3d = this.radius3d * Math.cos(this.theta); this.y3d = this.radius3d * Math.sin(this.theta); this.z3d = 0; }
-            project(rx, ry) { super.project(rx, ry, 1); }
-            draw(t, hoverY) {
-                if (this.scale <= 0) return;
-                const flicker = Math.sin(t / 100 + this.idx) * 1;
-                const sparkSize = (4 + flicker) * this.scale;
-                ctx.save();
-                ctx.shadowBlur = 10; ctx.shadowColor = 'white';
-                ctx.fillStyle = '#FFFACD'; 
-                ctx.beginPath(); ctx.arc(this.screenX, this.screenY + (hoverY * 0.5), sparkSize, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = GOLD_COLOR; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
-                ctx.beginPath(); ctx.arc(this.screenX, this.screenY + (hoverY * 0.5), sparkSize * 1.5, 0, Math.PI * 2); ctx.stroke();
-                ctx.globalAlpha = 1.0; ctx.fillStyle = 'white';
-                ctx.font = `bold ${13 * this.scale}px Segoe UI`; ctx.textAlign = 'center';
-                ctx.shadowColor = 'black'; ctx.shadowBlur = 5;
-                ctx.fillText(this.projectData.name, this.screenX, this.screenY + (hoverY * 0.5) + 25);
-                if (this.isHovered) {
-                    ctx.fillStyle = GOLD_COLOR; ctx.font = `bold ${14 * this.scale}px Segoe UI`;
-                    ctx.fillText(this.projectData.name, this.screenX, this.screenY + (hoverY * 0.5) + 25);
-                }
-                ctx.restore();
-            }
-            isMouseOver(mx, my, hoverY) {
-                const d = Math.sqrt((mx - this.screenX)**2 + (my - (this.screenY + hoverY * 0.5))**2);
-                return d < 25 * this.scale;
-            }
+            isMouseOver(mx, my, hY) { return Math.sqrt((mx-this.screenX)**2 + (my-(this.screenY+hY*0.5))**2) < 25*this.scale; }
         }
 
         function init() {
-            renderables = []; shootingStars = []; orbitalContent = [];
-            nebulaCanvas = document.createElement('canvas'); nebulaCanvas.width = nebulaCanvas.height = 1024;
-            const nctx = nebulaCanvas.getContext('2d');
-            nctx.fillStyle = '#050505'; nctx.fillRect(0,0,1024,1024);
-            const stars = [], dust = [];
-            for(let i=0; i<STAR_COUNT; i++) stars.push(new Star());
-            for(let i=0; i<DUST_COUNT; i++) dust.push(new CosmicDust());
-            const nodes = serviceConfig.map((conf, i) => new Node(i, conf));
+            renderables = [];
+            const stars = []; for(let i=0; i<STAR_COUNT; i++) stars.push(new Star());
+            const nodes = serviceConfig.map((c, i) => new Node(i, c));
             const fig = new Figure();
-            energyWebInstance = new EnergyWeb();
-            renderables = [...stars, ...dust, ...nodes, fig];
+            renderables = [...stars, ...nodes, fig];
+            
+            // Build Side Nav
+            sideNav.innerHTML = '';
+            serviceConfig.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'nav-item';
+                div.id = `nav-${c.key}`;
+                div.innerText = c.key;
+                div.onmouseenter = () => { 
+                    if(!isInPlanetView) autoHighlightIndex = serviceConfig.findIndex(sc => sc.key === c.key); 
+                };
+                div.onclick = (e) => { 
+                    e.stopPropagation(); // Prevent canvas background clicks
+                    const targetNode = renderables.find(r => r instanceof Node && r.key === c.key);
+                    if(targetNode) selectNode(targetNode); 
+                };
+                sideNav.appendChild(div);
+            });
+        }
+
+        function selectNode(node) {
+            if(!node || isTransitioning) return;
+            selectedNode = node; isTransitioning = true; transitionStartTime = performance.now();
+            targetRotationY = -node.theta; targetRotationX = 0; targetGlobalScale = 2.5;
+            rotationX = currentRotationX; rotationY = currentRotationY; globalScale = currentGlobalScale;
+            
+            orbitalContent = serviceData[node.key].projects.map((p, i) => new OrbitalSpark(i, p));
+            
+            document.getElementById('panel-title').innerText = serviceData[node.key].title.toUpperCase();
+            document.getElementById('panel-desc').innerText = serviceData[node.key].desc;
+            detailPanel.style.display = 'flex';
+
+            // Highlight side nav
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            const navItem = document.getElementById(`nav-${node.key}`);
+            if(navItem) navItem.classList.add('active');
         }
 
         function animate(t) {
             ctx.fillStyle = '#000'; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
             let tProg = 1;
             if (isTransitioning) {
-                const elap = t - transitionStartTime; tProg = Math.min(elap / transitionDuration, 1);
+                tProg = Math.min((t - transitionStartTime) / transitionDuration, 1);
                 const ep = easeInOutCubic(tProg);
                 currentGlobalScale = lerp(globalScale, targetGlobalScale, ep);
                 currentRotationX = angleLerp(rotationX, targetRotationX, ep);
                 currentRotationY = angleLerp(rotationY, targetRotationY, ep);
                 if (tProg === 1) { 
-                    isTransitioning = false; globalScale = targetGlobalScale; 
-                    rotationX = targetRotationX; rotationY = targetRotationY;
-                    if(selectedNode) isInPlanetView = true; else isInPlanetView = false;
+                    isTransitioning = false; 
+                    globalScale = targetGlobalScale; 
+                    rotationX = targetRotationX; 
+                    rotationY = targetRotationY; 
+                    isInPlanetView = !!selectedNode; 
                 }
             } else {
-                if (!isDragging && !isInPlanetView && !isPinching) rotationY += 0.0006;
+                if (!isDragging && !isInPlanetView) rotationY += 0.0006;
                 currentGlobalScale = globalScale;
                 currentRotationX = isInPlanetView ? planetViewRotationX : rotationX;
                 currentRotationY = isInPlanetView ? planetViewRotationY : rotationY;
             }
 
-            // --- AUTO HIGHLIGHT CYCLE LOGIC ---
             if (isIntroAnimationDone && !isGlobalHighlightActive && !isInPlanetView && !isDragging) {
-                if (t - lastHighlightSwitchTime > highlightDuration) {
-                    autoHighlightIndex = (autoHighlightIndex + 1) % nodeCount;
-                    lastHighlightSwitchTime = t;
+                if (t - lastHighlightSwitchTime > highlightDuration) { 
+                    autoHighlightIndex = (autoHighlightIndex + 1) % 9; 
+                    lastHighlightSwitchTime = t; 
                 }
             }
-
-            if (nebulaCanvas) {
-                ctx.save(); ctx.globalAlpha = 0.5;
-                ctx.drawImage(nebulaCanvas, 0, 0, window.innerWidth, window.innerHeight);
-                ctx.restore();
-            }
-
-            const dx = window.innerWidth/2 + tugOffsetX;
-            const dy = window.innerHeight/2 + tugOffsetY;
 
             let iProg = 1;
             if (!isIntroAnimationDone) {
                 if (!introStartTime) introStartTime = t;
-                const elap = t - introStartTime; iProg = easeInOutCubic(Math.min(elap/introDuration, 1));
-                if (iProg === 1) { isIntroAnimationDone = true; energyWebInstance.startGrowth(); }
+                iProg = easeInOutCubic(Math.min((t - introStartTime) / introDuration, 1));
+                if (iProg === 1) isIntroAnimationDone = true;
             }
 
             renderables.forEach(r => { if(r.project) r.project(currentRotationX, currentRotationY, currentGlobalScale); });
-            const fig = renderables.find(r => r instanceof Figure);
-
+            
             if (isInPlanetView && selectedNode) {
-                const img = planetImages[selectedNode.serviceKey];
-                const nodeConf = serviceConfig.find(c => c.key === selectedNode.serviceKey);
-                const planetHoverOffset = Math.sin(t / 2000) * 15;
-                const auraGrad = ctx.createRadialGradient(window.innerWidth/2, window.innerHeight/2 + planetHoverOffset, 50, window.innerWidth/2, window.innerHeight/2 + planetHoverOffset, 400);
-                auraGrad.addColorStop(0, nodeConf.colors[0] + '33'); auraGrad.addColorStop(1, 'transparent');
-                ctx.fillStyle = auraGrad; ctx.fillRect(0,0,window.innerWidth, window.innerHeight);
+                const img = planetImages[selectedNode.key];
+                const hY = Math.sin(t / 2000) * 15;
                 orbitalContent.forEach(o => o.project(planetViewRotationX, planetViewRotationY));
-                const sortedOrbitals = [...orbitalContent].sort((a,b) => b.rotatedZ - a.rotatedZ);
-                sortedOrbitals.filter(o => o.rotatedZ > 0).forEach(o => o.draw(t, planetHoverOffset));
+                const sorted = [...orbitalContent].sort((a, b) => b.rotatedZ - a.rotatedZ);
+                sorted.filter(o => o.rotatedZ > 0).forEach(o => o.draw(t, hY));
                 if (img) {
-                    const h = window.innerHeight * 0.65; const w = img.width * (h / img.height);
-                    ctx.drawImage(img, window.innerWidth/2 - w/2, window.innerHeight/2 - h/2 + planetHoverOffset, w, h);
+                    const h = window.innerHeight * 0.65, w = img.width * (h / img.height);
+                    ctx.drawImage(img, window.innerWidth / 2 - w / 2, window.innerHeight / 2 - h / 2 + hY, w, h);
                 }
-                sortedOrbitals.filter(o => o.rotatedZ <= 0).forEach(o => o.draw(t, planetHoverOffset));
-                ctx.save(); ctx.fillStyle = 'white'; ctx.font = 'bold 2rem Segoe UI'; ctx.textAlign = 'center';
-                ctx.shadowBlur = 20; ctx.shadowColor = nodeConf.colors[0];
-                ctx.fillText(serviceData[selectedNode.serviceKey].title.toUpperCase(), window.innerWidth/2, 60);
-                ctx.restore();
-                exitPlanetViewButton.classList.add('visible');
+                sorted.filter(o => o.rotatedZ <= 0).forEach(o => o.draw(t, hY));
+                exitBtn.classList.add('visible');
             } else {
-                exitPlanetViewButton.classList.remove('visible');
-                if (energyWebInstance && isIntroAnimationDone) energyWebInstance.draw(t, dx, dy, currentGlobalScale);
-                renderables.sort((a,b) => b.rotatedZ - a.rotatedZ).forEach(r => {
+                exitBtn.classList.remove('visible');
+                renderables.sort((a, b) => b.rotatedZ - a.rotatedZ).forEach(r => {
                     if (r instanceof Figure) r.draw(t, iProg, currentFigureExtraScale, currentGlobalScale);
-                    else if (r instanceof Node) { 
-                        if (r !== selectedNode) { 
-                            r.isActivated = isIntroAnimationDone; 
-                            r.draw(t); 
-                        } 
-                    }
+                    else if (r instanceof Node) { r.isActivated = isIntroAnimationDone; r.draw(t); }
                     else r.draw();
                 });
             }
 
-            const easeF = 0.05;
-            tugOffsetX += (targetTugOffsetX - tugOffsetX) * easeF;
-            tugOffsetY += (targetTugOffsetY - tugOffsetY) * easeF;
-            currentFigureExtraScale += (targetFigureScale - currentFigureExtraScale) * easeF;
+            tugOffsetX += (targetTugOffsetX - tugOffsetX) * 0.05; 
+            tugOffsetY += (targetTugOffsetY - tugOffsetY) * 0.05;
+            currentFigureExtraScale += (targetFigureScale - currentFigureExtraScale) * 0.05;
             requestAnimationFrame(animate);
         }
 
         function run() { init(); requestAnimationFrame(animate); }
 
-        function getMousePos(e) {
-            if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            return { x: e.clientX, y: e.clientY };
+        function closeAll() {
+            isTransitioning = true; transitionStartTime = performance.now();
+            targetRotationX = 0; targetRotationY = 0; targetGlobalScale = 1.0;
+            rotationX = currentRotationX; rotationY = currentRotationY; globalScale = currentGlobalScale;
+            selectedNode = null; isInPlanetView = false;
+            detailPanel.style.display = 'none';
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         }
 
+        logoTitle.onclick = closeAll;
+        exitBtn.onclick = closeAll;
+        document.getElementById('modalClose').onclick = () => document.getElementById('serviceModal').classList.remove('active');
+
+        // Input Handling
+        let isDragging=false, lastMouseX=0, lastMouseY=0, hasDragged=false, isPinching=false, initialPinchDistance=0, initialPinchScale=1;
+        
+        function getPos(e) { return e.touches ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : {x:e.clientX, y:e.clientY}; }
         function getTouchDist(e) { return Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); }
 
-        function handleMove(e) {
-            if (isTransitioning) return;
+        function down(e) { 
+            if(isTransitioning) return; 
             if (e.touches && e.touches.length === 2) {
                 isPinching = true;
+                initialPinchDistance = getTouchDist(e);
+                initialPinchScale = globalScale;
+                return;
+            }
+            const p = getPos(e); 
+            isDragging = true; 
+            hasDragged = false; 
+            lastMouseX = p.x; 
+            lastMouseY = p.y; 
+        }
+
+        function move(e) {
+            if(isTransitioning) return;
+            if (e.touches && e.touches.length === 2) {
                 const currentDist = getTouchDist(e);
                 const ratio = currentDist / initialPinchDistance;
                 globalScale = Math.max(0.5, Math.min(4, initialPinchScale * ratio));
                 targetGlobalScale = globalScale;
                 return;
             }
-            if (isPinching) return;
-            const pos = getMousePos(e);
-            if (isDragging) {
-                const dx = pos.x - lastMouseX; const dy = pos.y - lastMouseY;
-                if (isInPlanetView) { planetViewRotationY += dx * 0.003; planetViewRotationX += dy * 0.003; }
-                else { rotationY += dx * 0.002; rotationX += dy * 0.002; targetTugOffsetX = (pos.x - window.innerWidth/2) * 0.1; targetTugOffsetY = (pos.y - window.innerHeight/2) * 0.1; }
-                lastMouseX = pos.x; lastMouseY = pos.y; hasDragged = true;
-            }
-
-            let hovered = false;
-            if (isInPlanetView) {
-                const planetHoverOffset = Math.sin(performance.now() / 2000) * 15;
-                orbitalContent.forEach(o => {
-                    if (o.isMouseOver(pos.x, pos.y, planetHoverOffset)) { o.isHovered = true; hovered = true; }
-                    else o.isHovered = false;
-                });
-            } else {
-                renderables.forEach(r => {
-                    if (r instanceof Node) r.isHovered = Math.sqrt((pos.x - r.screenX)**2 + (pos.y - r.screenY)**2) < r.screenRadius * 1.5;
-                    if (r.isHovered) hovered = true;
-                });
-                const fig = renderables.find(r => r instanceof Figure);
-                isHoveringFigure = fig && Math.sqrt((pos.x - (fig.screenX+tugOffsetX))**2 + (pos.y - (fig.screenY+tugOffsetY))**2) < 80;
-                if (isHoveringFigure) hovered = true;
-                targetFigureScale = isHoveringFigure ? 1.1 : 1.0;
-            }
-            canvas.style.cursor = hovered ? 'pointer' : 'grab';
-        }
-
-        function handleDown(e) {
-            if (isTransitioning) return;
-            if (e.touches && e.touches.length === 2) {
-                initialPinchDistance = getTouchDist(e); initialPinchScale = globalScale;
-                return;
-            }
-            const pos = getMousePos(e);
-            isDragging = true; hasDragged = false; lastMouseX = pos.x; lastMouseY = pos.y; 
-        }
-
-        function handleUp() { isDragging = false; isPinching = false; targetTugOffsetX = targetTugOffsetY = 0; }
-
-        canvas.addEventListener('mousemove', handleMove);
-        canvas.addEventListener('mousedown', handleDown);
-        window.addEventListener('mouseup', handleUp);
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
-        canvas.addEventListener('touchstart', (e) => { handleDown(e); }, { passive: true });
-        window.addEventListener('touchend', handleUp);
-        canvas.addEventListener('wheel', e => { e.preventDefault(); globalScale = Math.max(0.5, Math.min(4, globalScale - e.deltaY * 0.001)); targetGlobalScale = globalScale; }, { passive: false });
-        
-        canvas.addEventListener('click', (e) => {
-            if (hasDragged || isTransitioning || isPinching) return;
-            const pos = getMousePos(e);
+            const p = getPos(e); 
             
-            if (isInPlanetView) {
-                const planetHoverOffset = Math.sin(performance.now() / 2000) * 15;
-                const orb = orbitalContent.find(o => o.isMouseOver(pos.x, pos.y, planetHoverOffset));
-                if (orb) {
-                    document.getElementById('modalTitle').innerText = orb.projectData.name;
-                    document.getElementById('modalDescription').innerText = orb.projectData.desc;
-                    document.getElementById('serviceModal').classList.add('active');
+            // --- Node Hover Detection for Cursor & Animation ---
+            let hoveredInteractive = false;
+            if(!isInPlanetView) {
+                renderables.forEach(r => {
+                    if (r instanceof Node) {
+                        const dist = Math.sqrt((p.x - r.screenX)**2 + (p.y - r.screenY)**2);
+                        if(dist < r.screenRadius * 1.5) {
+                            r.isHovered = true;
+                            hoveredInteractive = true;
+                        } else {
+                            r.isHovered = false;
+                        }
+                    }
+                });
+                
+                const fig = renderables.find(r => r instanceof Figure);
+                if(fig && Math.sqrt((p.x - (fig.screenX + tugOffsetX))**2 + (p.y - (fig.screenY + tugOffsetY))**2) < 80) {
+                    hoveredInteractive = true;
+                }
+            } else {
+                const orb = orbitalContent.find(o => o.isMouseOver(p.x, p.y, Math.sin(performance.now() / 2000) * 15));
+                if(orb) hoveredInteractive = true;
+            }
+
+            canvas.style.cursor = hoveredInteractive ? 'pointer' : (isDragging ? 'grabbing' : 'grab');
+
+            if (!isDragging || isPinching) return;
+            const dx = p.x - lastMouseX, dy = p.y - lastMouseY;
+            if(isInPlanetView) { planetViewRotationY += dx * 0.003; planetViewRotationX += dy * 0.003; }
+            else { rotationY += dx * 0.002; rotationX += dy * 0.002; targetTugOffsetX = (p.x - window.innerWidth / 2) * 0.1; targetTugOffsetY = (p.y - window.innerHeight / 2) * 0.1; }
+            lastMouseX = p.x; lastMouseY = p.y; hasDragged = true;
+        }
+
+        function up() { isDragging = false; isPinching = false; targetTugOffsetX = 0; targetTugOffsetY = 0; }
+
+        canvas.addEventListener('mousedown', down); canvas.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+        canvas.addEventListener('touchstart', down); canvas.addEventListener('touchmove', move, { passive: false }); canvas.addEventListener('touchend', up);
+
+        canvas.addEventListener('wheel', e => { 
+            e.preventDefault(); 
+            globalScale = Math.max(0.5, Math.min(4, globalScale - e.deltaY * 0.001)); 
+            targetGlobalScale = globalScale; 
+        }, { passive: false });
+
+        canvas.addEventListener('click', e => {
+            if(hasDragged || isTransitioning || isPinching) return;
+            const p = getPos(e);
+            
+            if(isInPlanetView) {
+                const orb = orbitalContent.find(o => o.isMouseOver(p.x, p.y, Math.sin(performance.now() / 2000) * 15));
+                if(orb) { 
+                    document.getElementById('modalTitle').innerText = orb.data.name; 
+                    document.getElementById('modalDescription').innerText = orb.data.desc; 
+                    document.getElementById('serviceModal').classList.add('active'); 
                 }
                 return;
             }
 
-            if (isHoveringFigure) {
-                isGlobalHighlightActive = !isGlobalHighlightActive;
-                return;
+            const fig = renderables.find(r => r instanceof Figure);
+            const distToFig = Math.sqrt((p.x - (fig.screenX + tugOffsetX))**2 + (p.y - (fig.screenY + tugOffsetY))**2);
+            if(distToFig < 80) { 
+                isGlobalHighlightActive = !isGlobalHighlightActive; 
+                return; 
             }
 
-            const node = renderables.find(r => r instanceof Node && r.isHovered);
-            if (node) {
-                selectedNode = node; isTransitioning = true; transitionStartTime = performance.now();
-                targetRotationY = -node.theta; targetRotationX = 0; targetGlobalScale = 2.5;
-                rotationX = currentRotationX; rotationY = currentRotationY; globalScale = currentGlobalScale;
-                orbitalContent = [];
-                const projects = serviceData[node.serviceKey].projects;
-                projects.forEach((p, i) => orbitalContent.push(new OrbitalContent(i, p)));
-            }
+            const node = renderables.find(r => r instanceof Node && Math.sqrt((p.x - r.screenX)**2 + (p.y - r.screenY)**2) < r.screenRadius * 1.5);
+            if(node) selectNode(node);
         });
 
-        exitPlanetViewButton.onclick = () => {
-            isTransitioning = true; transitionStartTime = performance.now();
-            targetRotationX = 0; targetRotationY = 0; targetGlobalScale = 1.0;
-            rotationX = currentRotationX; rotationY = currentRotationY; globalScale = currentGlobalScale;
-            selectedNode = null; isInPlanetView = false;
-        };
-
-        document.getElementById('modalClose').onclick = () => document.getElementById('serviceModal').classList.remove('active');
     </script>
 </body>
 </html>
-
