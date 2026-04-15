@@ -169,6 +169,80 @@
             color: #fff;
         }
 
+        /* --- Hero Overlay --- */
+        .hero-overlay {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            max-width: 520px;
+            width: min(520px, 90vw);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease;
+        }
+        .hero-overlay h2 {
+            margin: 0;
+            font-size: 1.6rem;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+        .hero-overlay p {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #d6d6d6;
+        }
+        .hero-overlay ul {
+            margin: 0;
+            padding-left: 0;
+            list-style: none;
+            color: #c7c7c7;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            display: grid;
+            gap: 6px;
+        }
+        .hero-overlay li {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .hero-overlay li::before {
+            content: "✦";
+            color: var(--gold-color);
+        }
+        .hero-overlay .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .hero-overlay button {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 195, 0, 0.35);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .hero-overlay button:hover {
+            background: rgba(255, 195, 0, 0.2);
+            box-shadow: 0 0 12px rgba(255, 195, 0, 0.4);
+        }
+        .hero-overlay.collapsed {
+            transform: translate(-50%, -35%) scale(0.5);
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
         /* --- Modal --- */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -188,6 +262,10 @@
         @media (max-width: 768px) {
             #detail-panel { right: 10px; left: 10px; width: auto; bottom: 30px; top: auto; }
             .side-nav { left: 10px; padding: 10px; top: auto; bottom: 30px; transform: none; background: rgba(0,0,0,0.5); border-radius: 8px; }
+            .hero-overlay {
+                top: 45%;
+                padding: 0 10px;
+            }
         }
     </style>
 </head>
@@ -206,6 +284,20 @@
 
         <div class="side-nav" id="side-nav">
             <!-- Navigation items populated by JavaScript -->
+        </div>
+
+        <div class="hero-overlay hud-element" id="hero-overlay" aria-hidden="false">
+            <h2>Multi-Disciplinary Creator & Builder</h2>
+            <p>Turning bold ideas into tangible experiences across sound, code, design, and culture.</p>
+            <ul>
+                <li>AI workflows + creative automation</li>
+                <li>High-fidelity media & music production</li>
+                <li>Systems that launch, scale, and endure</li>
+            </ul>
+            <div class="hero-actions">
+                <button id="hero-collapse">Enter Orbit</button>
+                <button id="hero-focus">View the Constellations</button>
+            </div>
         </div>
 
         <div id="detail-panel" class="hud-element pointer-events-auto">
@@ -243,6 +335,9 @@
         const detailPanel = document.getElementById('detail-panel');
         const sideNav = document.getElementById('side-nav');
         const logoTitle = document.getElementById('logo-title');
+        const heroOverlay = document.getElementById('hero-overlay');
+        const heroCollapseButton = document.getElementById('hero-collapse');
+        const heroFocusButton = document.getElementById('hero-focus');
         
         const introDuration = 2500;
         const transitionDuration = 1200;
@@ -262,6 +357,7 @@
         const centralFigureImage = new Image();
         centralFigureImage.crossOrigin = "Anonymous"; 
         centralFigureImage.onload = () => { preloader.itemLoaded(); }; 
+        centralFigureImage.onerror = () => { preloader.itemLoaded(); };
         centralFigureImage.src = 'https://i.imgur.com/Zclc7ji.png';
 
         let renderables = [], shootingStars = [], orbitalContent = []; 
@@ -278,6 +374,8 @@
         let isInPlanetView = false, isTransitioning = false, transitionStartTime = 0, selectedNode = null;
         let isGlobalHighlightActive = false, autoHighlightIndex = 0, lastHighlightSwitchTime = 0;
         const highlightDuration = 2000;
+        let isHeroExpanded = true;
+        let hasHeroCollapsed = false;
 
         const planetImages = {};
         const planetImageUrls = {
@@ -300,6 +398,7 @@
             planetImages[key] = new Image();
             planetImages[key].crossOrigin = "Anonymous";
             planetImages[key].onload = () => preloader.itemLoaded();
+            planetImages[key].onerror = () => preloader.itemLoaded();
             planetImages[key].src = planetImageUrls[key];
         });
 
@@ -382,8 +481,7 @@
                 ctx.fillStyle=g; ctx.beginPath(); ctx.arc(this.screenX, this.screenY, size, 0, Math.PI*2); ctx.fill();
                 ctx.font=`900 ${size*0.8}px "Font Awesome 5 Free"`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff'; ctx.fillText(this.icon, this.screenX, this.screenY);
                 if(active && !isInPlanetView) {
-                    ctx.font=`bold ${size*0.6}px Segoe UI`; ctx.fillStyle='#fff'; ctx.shadowColor='#000'; ctx.shadowBlur=10;
-                    ctx.fillText(serviceData[this.key].title.split(' ')[0], this.screenX, this.screenY+size*1.8);
+                    // Intentionally minimal: no labels under nodes.
                 }
                 ctx.restore();
             }
@@ -430,7 +528,7 @@
                 const div = document.createElement('div');
                 div.className = 'nav-item';
                 div.id = `nav-${c.key}`;
-                div.innerText = c.key;
+                div.innerText = serviceData[c.key]?.title || c.key;
                 div.onmouseenter = () => { 
                     if(!isInPlanetView) autoHighlightIndex = serviceConfig.findIndex(sc => sc.key === c.key); 
                 };
@@ -497,6 +595,10 @@
                 iProg = easeInOutCubic(Math.min((t - introStartTime) / introDuration, 1));
                 if (iProg === 1) isIntroAnimationDone = true;
             }
+            if (isIntroAnimationDone && !hasHeroCollapsed) {
+                setHeroState(false);
+                hasHeroCollapsed = true;
+            }
 
             renderables.forEach(r => { if(r.project) r.project(currentRotationX, currentRotationY, currentGlobalScale); });
             
@@ -529,6 +631,12 @@
 
         function run() { init(); requestAnimationFrame(animate); }
 
+        function setHeroState(expanded) {
+            isHeroExpanded = expanded;
+            heroOverlay.classList.toggle('collapsed', !expanded);
+            heroOverlay.setAttribute('aria-hidden', (!expanded).toString());
+        }
+
         function closeAll() {
             isTransitioning = true; transitionStartTime = performance.now();
             targetRotationX = 0; targetRotationY = 0; targetGlobalScale = 1.0;
@@ -541,6 +649,8 @@
         logoTitle.onclick = closeAll;
         exitBtn.onclick = closeAll;
         document.getElementById('modalClose').onclick = () => document.getElementById('serviceModal').classList.remove('active');
+        heroCollapseButton.onclick = () => setHeroState(false);
+        heroFocusButton.onclick = () => setHeroState(false);
 
         // Input Handling
         let isDragging=false, lastMouseX=0, lastMouseY=0, hasDragged=false, isPinching=false, initialPinchDistance=0, initialPinchScale=1;
@@ -635,7 +745,7 @@
             const fig = renderables.find(r => r instanceof Figure);
             const distToFig = Math.sqrt((p.x - (fig.screenX + tugOffsetX))**2 + (p.y - (fig.screenY + tugOffsetY))**2);
             if(distToFig < 80) { 
-                isGlobalHighlightActive = !isGlobalHighlightActive; 
+                setHeroState(!isHeroExpanded);
                 return; 
             }
 
