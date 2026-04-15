@@ -169,6 +169,189 @@
             color: #fff;
         }
 
+        /* --- About / Hero Overlay --- */
+        .hero-overlay {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            max-width: 640px;
+            width: min(640px, 92vw);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            text-align: center;
+            transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.45s ease;
+            padding: 56px 62px;
+            clip-path: polygon(50% 2%, 60% 10%, 74% 7%, 84% 16%, 97% 31%, 87% 44%, 97% 60%, 85% 76%, 74% 93%, 60% 90%, 50% 98%, 40% 90%, 26% 93%, 15% 76%, 3% 60%, 13% 44%, 3% 31%, 16% 16%, 26% 7%, 40% 10%);
+            background: radial-gradient(circle at 40% 20%, rgba(255,195,0,0.12), rgba(0,0,0,0.9) 45%), #040404;
+            border: none;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .hero-overlay::before {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            background: conic-gradient(from 0deg, rgba(255,195,0,0.95), rgba(255,255,255,0.25), rgba(255,195,0,0.95));
+            clip-path: inherit;
+            z-index: -1;
+            animation: starPulse 4s linear infinite;
+            filter: drop-shadow(0 0 16px rgba(255, 195, 0, 0.55));
+        }
+        @keyframes starPulse {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .hero-overlay h2 {
+            margin: 0;
+            font-size: 1.6rem;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+        .hero-overlay p {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #d6d6d6;
+        }
+        .hero-overlay ul {
+            margin: 0;
+            padding-left: 0;
+            list-style: none;
+            color: #c7c7c7;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            display: grid;
+            gap: 6px;
+        }
+        .hero-overlay li {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .hero-overlay li::before {
+            content: "✦";
+            color: var(--gold-color);
+        }
+        .hero-overlay .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .hero-overlay button {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 195, 0, 0.35);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .hero-overlay button:hover {
+            background: rgba(255, 195, 0, 0.2);
+            box-shadow: 0 0 12px rgba(255, 195, 0, 0.4);
+        }
+        .hero-overlay.collapsed {
+            transform: translate(-50%, -35%) scale(0.65);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* --- Project Cylinder --- */
+        .project-cylinder {
+            position: absolute;
+            left: 50%;
+            top: 54%;
+            transform: translate(-50%, -50%);
+            width: min(760px, 90vw);
+            min-height: 360px;
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            pointer-events: auto;
+            border: 1px solid rgba(0, 255, 255, 0.35);
+            box-shadow: 0 0 24px rgba(0, 255, 255, 0.18), inset 0 0 20px rgba(0, 255, 255, 0.08);
+            background: linear-gradient(160deg, rgba(0, 18, 30, 0.68), rgba(8, 8, 18, 0.82));
+        }
+        .project-cylinder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(196, 246, 255, 0.85);
+        }
+        .cylinder-viewport {
+            position: relative;
+            height: 270px;
+            perspective: 1100px;
+            overflow: hidden;
+            border-top: 1px solid rgba(0,255,255,0.15);
+            border-bottom: 1px solid rgba(0,255,255,0.15);
+        }
+        .cylinder-track {
+            position: absolute;
+            inset: 0;
+            transform-style: preserve-3d;
+        }
+        .cyl-card {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: min(260px, 66vw);
+            min-height: 150px;
+            transform-style: preserve-3d;
+            background: linear-gradient(145deg, rgba(20, 34, 48, 0.72), rgba(4, 10, 20, 0.9));
+            border: 1px solid rgba(0, 255, 255, 0.28);
+            border-radius: 12px;
+            padding: 16px;
+            box-sizing: border-box;
+            box-shadow: 0 0 18px rgba(0,255,255,0.17);
+        }
+        .cyl-card h4 {
+            margin: 0 0 8px;
+            color: #bcf8ff;
+            letter-spacing: 0.6px;
+            font-size: 0.95rem;
+        }
+        .cyl-card p {
+            margin: 0;
+            color: #a5d7df;
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+        .cylinder-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .cylinder-controls button {
+            background: rgba(0,255,255,0.08);
+            color: #d9fcff;
+            border: 1px solid rgba(0,255,255,0.4);
+            border-radius: 6px;
+            padding: 8px 12px;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .cylinder-controls button:hover {
+            background: rgba(0,255,255,0.2);
+        }
+        .cylinder-help {
+            text-align: center;
+            font-size: 0.74rem;
+            color: #7fc7d3;
+        }
+
         /* --- Modal --- */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -188,6 +371,22 @@
         @media (max-width: 768px) {
             #detail-panel { right: 10px; left: 10px; width: auto; bottom: 30px; top: auto; }
             .side-nav { left: 10px; padding: 10px; top: auto; bottom: 30px; transform: none; background: rgba(0,0,0,0.5); border-radius: 8px; }
+            .hero-overlay {
+                top: 40%;
+                padding: 52px 40px;
+                width: min(560px, 96vw);
+            }
+            .project-cylinder {
+                width: 96vw;
+                top: 48%;
+                min-height: 320px;
+            }
+            .cylinder-viewport {
+                height: 220px;
+            }
+            .cyl-card {
+                width: min(210px, 72vw);
+            }
         }
     </style>
 </head>
@@ -208,14 +407,42 @@
             <!-- Navigation items populated by JavaScript -->
         </div>
 
+        <div class="hero-overlay hud-element collapsed" id="hero-overlay" aria-hidden="true">
+            <h2>Multi-Disciplinary Creator & Builder</h2>
+            <p>Turning bold ideas into tangible experiences across sound, code, design, and culture.</p>
+            <ul>
+                <li>AI workflows + creative automation</li>
+                <li>High-fidelity media & music production</li>
+                <li>Systems that launch, scale, and endure</li>
+            </ul>
+            <div class="hero-actions">
+                <button id="hero-close">Close Bio</button>
+            </div>
+        </div>
+
         <div id="detail-panel" class="hud-element pointer-events-auto">
             <button id="exitPlanetViewButton">← GALAXY OVERVIEW</button>
             <h2 id="panel-title">MISSION BRIEFING</h2>
             <p id="panel-desc">Awaiting category selection...</p>
             <div id="panel-services" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; font-size: 0.8rem; color: #888;">
-                Click project sparks to view artifacts.
+                Scroll through the holographic project loop.
             </div>
             <button class="cta-button">Initialize Inquiry</button>
+        </div>
+
+        <div id="project-cylinder" class="project-cylinder hud-element">
+            <div class="project-cylinder-header">
+                <span>Holographic Project Loop</span>
+                <span id="project-counter">0 / 0</span>
+            </div>
+            <div class="cylinder-viewport" id="cylinder-viewport">
+                <div class="cylinder-track" id="cylinder-track"></div>
+            </div>
+            <div class="cylinder-controls">
+                <button id="cylinder-prev">Rotate Left</button>
+                <button id="cylinder-next">Rotate Right</button>
+            </div>
+            <div class="cylinder-help">Use mouse wheel / drag horizontally to spin cards.</div>
         </div>
     </div>
 
@@ -243,6 +470,14 @@
         const detailPanel = document.getElementById('detail-panel');
         const sideNav = document.getElementById('side-nav');
         const logoTitle = document.getElementById('logo-title');
+        const heroOverlay = document.getElementById('hero-overlay');
+        const heroCloseButton = document.getElementById('hero-close');
+        const projectCylinder = document.getElementById('project-cylinder');
+        const cylinderTrack = document.getElementById('cylinder-track');
+        const cylinderViewport = document.getElementById('cylinder-viewport');
+        const projectCounter = document.getElementById('project-counter');
+        const cylinderPrevButton = document.getElementById('cylinder-prev');
+        const cylinderNextButton = document.getElementById('cylinder-next');
         
         const introDuration = 2500;
         const transitionDuration = 1200;
@@ -262,9 +497,10 @@
         const centralFigureImage = new Image();
         centralFigureImage.crossOrigin = "Anonymous"; 
         centralFigureImage.onload = () => { preloader.itemLoaded(); }; 
+        centralFigureImage.onerror = () => { preloader.itemLoaded(); };
         centralFigureImage.src = 'https://i.imgur.com/Zclc7ji.png';
 
-        let renderables = [], shootingStars = [], orbitalContent = []; 
+        let renderables = [], shootingStars = []; 
         let nebulaCanvas = null; 
         const STAR_COUNT = 300; 
         const GOLD_COLOR = '#ffc300';
@@ -278,6 +514,9 @@
         let isInPlanetView = false, isTransitioning = false, transitionStartTime = 0, selectedNode = null;
         let isGlobalHighlightActive = false, autoHighlightIndex = 0, lastHighlightSwitchTime = 0;
         const highlightDuration = 2000;
+        let isHeroExpanded = false;
+        let cylinderRotation = 0;
+        let currentProjectIndex = 0;
 
         const planetImages = {};
         const planetImageUrls = {
@@ -300,6 +539,7 @@
             planetImages[key] = new Image();
             planetImages[key].crossOrigin = "Anonymous";
             planetImages[key].onload = () => preloader.itemLoaded();
+            planetImages[key].onerror = () => preloader.itemLoaded();
             planetImages[key].src = planetImageUrls[key];
         });
 
@@ -382,8 +622,7 @@
                 ctx.fillStyle=g; ctx.beginPath(); ctx.arc(this.screenX, this.screenY, size, 0, Math.PI*2); ctx.fill();
                 ctx.font=`900 ${size*0.8}px "Font Awesome 5 Free"`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff'; ctx.fillText(this.icon, this.screenX, this.screenY);
                 if(active && !isInPlanetView) {
-                    ctx.font=`bold ${size*0.6}px Segoe UI`; ctx.fillStyle='#fff'; ctx.shadowColor='#000'; ctx.shadowBlur=10;
-                    ctx.fillText(serviceData[this.key].title.split(' ')[0], this.screenX, this.screenY+size*1.8);
+                    // Intentionally minimal: no labels under nodes.
                 }
                 ctx.restore();
             }
@@ -402,19 +641,43 @@
             }
         }
 
-        class OrbitalSpark extends Star {
-            constructor(idx, data) { super(); this.idx=idx; this.data=data; this.theta=(Math.PI*2/3)*idx; this.phi=Math.PI*0.5; this.r3d=window.innerWidth*0.45; }
-            project(rx, ry) { this.x3d=this.r3d*Math.cos(this.theta); this.y3d=this.r3d*Math.sin(this.theta); this.z3d=0; super.project(rx,ry,1); }
-            draw(t, hY) {
-                if(this.scale<=0)return;
-                const s = (4+Math.sin(t/100+this.idx))*this.scale;
-                ctx.save(); ctx.shadowBlur=10; ctx.shadowColor='#fff'; ctx.fillStyle='#FFFACD';
-                ctx.beginPath(); ctx.arc(this.screenX, this.screenY+hY*0.5, s, 0, Math.PI*2); ctx.fill();
-                ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.font=`bold ${12*this.scale}px Segoe UI`; ctx.textAlign='center';
-                ctx.shadowColor='#000'; ctx.shadowBlur=5; ctx.fillText(this.data.name, this.screenX, this.screenY+hY*0.5+25);
-                ctx.restore();
+        function renderCylinderCards(projects) {
+            cylinderTrack.innerHTML = '';
+            const count = projects.length;
+            if (!count) {
+                projectCounter.innerText = '0 / 0';
+                return;
             }
-            isMouseOver(mx, my, hY) { return Math.sqrt((mx-this.screenX)**2 + (my-(this.screenY+hY*0.5))**2) < 25*this.scale; }
+            const radius = Math.max(220, Math.min(window.innerWidth * 0.34, 320));
+            const angleStep = 360 / Math.max(count, 1);
+            projects.forEach((project, idx) => {
+                const card = document.createElement('article');
+                card.className = 'cyl-card';
+                card.innerHTML = `<h4>${project.name}</h4><p>${project.desc}</p>`;
+                const angle = idx * angleStep;
+                card.style.transform = `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${radius}px)`;
+                cylinderTrack.appendChild(card);
+            });
+            currentProjectIndex = 0;
+            cylinderRotation = 0;
+            updateCylinderRotation(projects.length);
+        }
+
+        function updateCylinderRotation(cardCount) {
+            if (!cardCount) {
+                projectCounter.innerText = '0 / 0';
+                return;
+            }
+            cylinderTrack.style.transform = `rotateY(${cylinderRotation}deg)`;
+            const normalized = ((-cylinderRotation % 360) + 360) % 360;
+            const step = 360 / Math.max(cardCount, 1);
+            currentProjectIndex = Math.round(normalized / step) % Math.max(cardCount, 1);
+            projectCounter.innerText = `${currentProjectIndex + 1} / ${cardCount}`;
+        }
+
+        function rotateCylinder(delta, cardCount) {
+            cylinderRotation += delta;
+            updateCylinderRotation(cardCount);
         }
 
         function init() {
@@ -430,7 +693,7 @@
                 const div = document.createElement('div');
                 div.className = 'nav-item';
                 div.id = `nav-${c.key}`;
-                div.innerText = c.key;
+                div.innerText = serviceData[c.key]?.title || c.key;
                 div.onmouseenter = () => { 
                     if(!isInPlanetView) autoHighlightIndex = serviceConfig.findIndex(sc => sc.key === c.key); 
                 };
@@ -448,17 +711,42 @@
             selectedNode = node; isTransitioning = true; transitionStartTime = performance.now();
             targetRotationY = -node.theta; targetRotationX = 0; targetGlobalScale = 2.5;
             rotationX = currentRotationX; rotationY = currentRotationY; globalScale = currentGlobalScale;
-            
-            orbitalContent = serviceData[node.key].projects.map((p, i) => new OrbitalSpark(i, p));
+
+            const projects = serviceData[node.key].projects || [];
+            renderCylinderCards(projects);
+            projectCylinder.style.display = 'flex';
             
             document.getElementById('panel-title').innerText = serviceData[node.key].title.toUpperCase();
             document.getElementById('panel-desc').innerText = serviceData[node.key].desc;
             detailPanel.style.display = 'flex';
+            setHeroState(false);
 
             // Highlight side nav
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             const navItem = document.getElementById(`nav-${node.key}`);
             if(navItem) navItem.classList.add('active');
+        }
+
+        function drawIntroConnections(introProgress) {
+            const fig = renderables.find(r => r instanceof Figure);
+            if (!fig) return;
+            const nodes = renderables.filter(r => r instanceof Node);
+            const pulse = 0.45 + Math.sin(performance.now() / 180) * 0.2;
+            nodes.forEach(node => {
+                if (node.scale <= 0) return;
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(fig.screenX + tugOffsetX, fig.screenY + tugOffsetY - 70);
+                const bendX = (fig.screenX + node.screenX) / 2 + Math.sin((node.idx + 1) * 1.7 + performance.now() / 500) * 18;
+                const bendY = (fig.screenY + node.screenY) / 2 - 45;
+                ctx.quadraticCurveTo(bendX, bendY, node.screenX, node.screenY);
+                ctx.strokeStyle = `rgba(255, 195, 0, ${Math.max(0, (1 - introProgress) * 0.85 + pulse * 0.2)})`;
+                ctx.lineWidth = 1.4 + (1 - introProgress) * 2.4;
+                ctx.shadowBlur = 14;
+                ctx.shadowColor = 'rgba(255,195,0,0.8)';
+                ctx.stroke();
+                ctx.restore();
+            });
         }
 
         function animate(t) {
@@ -497,20 +785,20 @@
                 iProg = easeInOutCubic(Math.min((t - introStartTime) / introDuration, 1));
                 if (iProg === 1) isIntroAnimationDone = true;
             }
-
             renderables.forEach(r => { if(r.project) r.project(currentRotationX, currentRotationY, currentGlobalScale); });
+            if (!isIntroAnimationDone || iProg < 1) drawIntroConnections(iProg);
             
             if (isInPlanetView && selectedNode) {
                 const img = planetImages[selectedNode.key];
                 const hY = Math.sin(t / 2000) * 15;
-                orbitalContent.forEach(o => o.project(planetViewRotationX, planetViewRotationY));
-                const sorted = [...orbitalContent].sort((a, b) => b.rotatedZ - a.rotatedZ);
-                sorted.filter(o => o.rotatedZ > 0).forEach(o => o.draw(t, hY));
                 if (img) {
-                    const h = window.innerHeight * 0.65, w = img.width * (h / img.height);
+                    const h = window.innerHeight * 0.62, w = img.width * (h / img.height);
+                    ctx.save();
+                    ctx.globalAlpha = 0.45;
+                    ctx.filter = 'blur(0.2px) drop-shadow(0 0 18px rgba(0,255,255,0.35))';
                     ctx.drawImage(img, window.innerWidth / 2 - w / 2, window.innerHeight / 2 - h / 2 + hY, w, h);
+                    ctx.restore();
                 }
-                sorted.filter(o => o.rotatedZ <= 0).forEach(o => o.draw(t, hY));
                 exitBtn.classList.add('visible');
             } else {
                 exitBtn.classList.remove('visible');
@@ -529,18 +817,34 @@
 
         function run() { init(); requestAnimationFrame(animate); }
 
+        function setHeroState(expanded) {
+            isHeroExpanded = expanded;
+            heroOverlay.classList.toggle('collapsed', !expanded);
+            heroOverlay.setAttribute('aria-hidden', (!expanded).toString());
+        }
+
         function closeAll() {
             isTransitioning = true; transitionStartTime = performance.now();
             targetRotationX = 0; targetRotationY = 0; targetGlobalScale = 1.0;
             rotationX = currentRotationX; rotationY = currentRotationY; globalScale = currentGlobalScale;
             selectedNode = null; isInPlanetView = false;
             detailPanel.style.display = 'none';
+            projectCylinder.style.display = 'none';
+            setHeroState(false);
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         }
 
         logoTitle.onclick = closeAll;
         exitBtn.onclick = closeAll;
         document.getElementById('modalClose').onclick = () => document.getElementById('serviceModal').classList.remove('active');
+        heroCloseButton.onclick = () => setHeroState(false);
+        cylinderPrevButton.onclick = () => rotateCylinder(360 / Math.max(serviceData[selectedNode?.key]?.projects?.length || 1, 1), serviceData[selectedNode?.key]?.projects?.length || 1);
+        cylinderNextButton.onclick = () => rotateCylinder(-360 / Math.max(serviceData[selectedNode?.key]?.projects?.length || 1, 1), serviceData[selectedNode?.key]?.projects?.length || 1);
+        cylinderViewport.addEventListener('wheel', e => {
+            e.preventDefault();
+            const count = serviceData[selectedNode?.key]?.projects?.length || 1;
+            rotateCylinder(-e.deltaY * 0.06, count);
+        }, { passive: false });
 
         // Input Handling
         let isDragging=false, lastMouseX=0, lastMouseY=0, hasDragged=false, isPinching=false, initialPinchDistance=0, initialPinchScale=1;
@@ -594,15 +898,17 @@
                     hoveredInteractive = true;
                 }
             } else {
-                const orb = orbitalContent.find(o => o.isMouseOver(p.x, p.y, Math.sin(performance.now() / 2000) * 15));
-                if(orb) hoveredInteractive = true;
+                hoveredInteractive = true;
             }
 
             canvas.style.cursor = hoveredInteractive ? 'pointer' : (isDragging ? 'grabbing' : 'grab');
 
             if (!isDragging || isPinching) return;
             const dx = p.x - lastMouseX, dy = p.y - lastMouseY;
-            if(isInPlanetView) { planetViewRotationY += dx * 0.003; planetViewRotationX += dy * 0.003; }
+            if(isInPlanetView) {
+                const count = serviceData[selectedNode?.key]?.projects?.length || 1;
+                rotateCylinder(dx * 0.35, count);
+            }
             else { rotationY += dx * 0.002; rotationX += dy * 0.002; targetTugOffsetX = (p.x - window.innerWidth / 2) * 0.1; targetTugOffsetY = (p.y - window.innerHeight / 2) * 0.1; }
             lastMouseX = p.x; lastMouseY = p.y; hasDragged = true;
         }
@@ -614,8 +920,13 @@
 
         canvas.addEventListener('wheel', e => { 
             e.preventDefault(); 
-            globalScale = Math.max(0.5, Math.min(4, globalScale - e.deltaY * 0.001)); 
-            targetGlobalScale = globalScale; 
+            if (isInPlanetView) {
+                const count = serviceData[selectedNode?.key]?.projects?.length || 1;
+                rotateCylinder(-e.deltaY * 0.06, count);
+            } else {
+                globalScale = Math.max(0.5, Math.min(4, globalScale - e.deltaY * 0.001)); 
+                targetGlobalScale = globalScale; 
+            }
         }, { passive: false });
 
         canvas.addEventListener('click', e => {
@@ -623,19 +934,13 @@
             const p = getPos(e);
             
             if(isInPlanetView) {
-                const orb = orbitalContent.find(o => o.isMouseOver(p.x, p.y, Math.sin(performance.now() / 2000) * 15));
-                if(orb) { 
-                    document.getElementById('modalTitle').innerText = orb.data.name; 
-                    document.getElementById('modalDescription').innerText = orb.data.desc; 
-                    document.getElementById('serviceModal').classList.add('active'); 
-                }
                 return;
             }
 
             const fig = renderables.find(r => r instanceof Figure);
             const distToFig = Math.sqrt((p.x - (fig.screenX + tugOffsetX))**2 + (p.y - (fig.screenY + tugOffsetY))**2);
             if(distToFig < 80) { 
-                isGlobalHighlightActive = !isGlobalHighlightActive; 
+                setHeroState(!isHeroExpanded);
                 return; 
             }
 
