@@ -2,6 +2,10 @@ const focusStyles=document.createElement('link');
 focusStyles.rel='stylesheet';
 focusStyles.href='css/focus.css';
 document.head.appendChild(focusStyles);
+const orbHoverStyles=document.createElement('link');
+orbHoverStyles.rel='stylesheet';
+orbHoverStyles.href='css/orb-hover.css';
+document.head.appendChild(orbHoverStyles);
 
 const avatar=document.getElementById('avatar3d'),nav=document.getElementById('nav'),intro=document.getElementById('intro'),panel=document.getElementById('panel'),orb=document.getElementById('orb'),title=document.getElementById('title'),desc=document.getElementById('desc'),chips=document.getElementById('chips'),deck=document.getElementById('deck'),count=document.getElementById('count'),status=document.getElementById('status'),modelError=document.getElementById('modelError'),bgVideo=document.getElementById('bgVideo');
 
@@ -45,7 +49,7 @@ function openOrbFocus(btn,target){focusedOrb=btn;orbitButtons.forEach(o=>o.class
 function closeOrbFocus(hidePanel=true){document.body.classList.remove('orb-focus');orbitButtons.forEach(o=>o.classList.remove('is-focused','is-opening'));pinLayer.classList.remove('show');pinLayer.innerHTML='';focusedOrb=null;if(hidePanel){panel.classList.remove('show');intro.classList.remove('hide')}}
 function parseTheta(v){if(!v)return null;const match=String(v).match(/-?[\d.]+/);return match?Number(match[0])*Math.PI/180:null}
 function syncOrbitFromAvatar(){try{const orbit=avatar.getCameraOrbit?avatar.getCameraOrbit():null;if(orbit&&Number.isFinite(orbit.theta)){orbitAngle=orbit.theta;manualUntil=performance.now()+1200;return}}catch(e){}const attr=parseTheta(avatar.getAttribute('camera-orbit'));if(attr!==null){orbitAngle=attr;manualUntil=performance.now()+1200}}
-function updateOrbPositions(t){const dt=Math.min(48,t-lastT)/1000;lastT=t;if(!document.body.classList.contains('orb-focus')&&t>manualUntil){orbitAngle+=dt*.18}const w=innerWidth,h=innerHeight;const rx=Math.min(w*.30,430),ry=Math.min(h*.255,240);const cx=w*.5,cy=h*.485;const base=[Math.PI*.92,Math.PI*.08,Math.PI*1.25,Math.PI*1.75];orbitButtons.forEach((btn,i)=>{if(btn.classList.contains('is-focused'))return;const a=orbitAngle+base[i];const depth=(Math.sin(a)+1)/2;const x=cx+Math.cos(a)*rx;const y=cy+Math.sin(a)*ry*.72+(i>1?48:-26);const scale=.72+depth*.46;const opacity=.48+depth*.52;const z=2+Math.round(depth*5);btn.style.transform=`translate(-50%,-50%) translate(${x-cx}px,${y-cy}px) scale(${scale})`;btn.style.opacity=String(opacity);btn.style.zIndex=String(z)});requestAnimationFrame(updateOrbPositions)}
+function updateOrbPositions(t){const dt=Math.min(48,t-lastT)/1000;lastT=t;if(!document.body.classList.contains('orb-focus')&&t>manualUntil){orbitAngle+=dt*.18}const w=innerWidth,h=innerHeight;const rx=Math.min(w*.30,430),ry=Math.min(h*.255,240);const cx=w*.5,cy=h*.485;const base=[Math.PI*.92,Math.PI*.08,Math.PI*1.25,Math.PI*1.75];orbitButtons.forEach((btn,i)=>{if(btn.classList.contains('is-focused'))return;const a=orbitAngle+base[i];const depth=(Math.sin(a)+1)/2;const x=cx+Math.cos(a)*rx;const y=cy+Math.sin(a)*ry*.72+(i>1?48:-26);const hover=btn.matches(':hover')?1.1:1;const scale=(.72+depth*.46)*hover;const opacity=.48+depth*.52;const z=2+Math.round(depth*5);btn.style.transform=`translate(-50%,-50%) translate(${x-cx}px,${y-cy}px) scale(${scale})`;btn.style.opacity=String(opacity);btn.style.zIndex=String(z)});requestAnimationFrame(updateOrbPositions)}
 
 document.getElementById('explore').addEventListener('click',()=>select(0,true));
 document.getElementById('prev').addEventListener('click',()=>select(sel-1,true));
