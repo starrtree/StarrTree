@@ -35,9 +35,14 @@ const orbModels={
   seed:document.querySelector('.orb-seed .orb-model'),
   plant:document.querySelector('.orb-plant .orb-model')
 };
+Object.entries(orbModels).forEach(([key,mv])=>{const btn=mv?.closest('.starr-orb');if(!btn)return;const img=document.createElement('img');img.className='orb-preview';img.alt=`${key} orb preview`;btn.insertBefore(img,btn.firstChild)});
 function configureOrbModel(mv){if(!mv)return;mv.setAttribute('camera-controls','');mv.setAttribute('disable-pan','');mv.setAttribute('auto-rotate','');mv.setAttribute('camera-orbit','0deg 75deg 5.2m');mv.setAttribute('min-camera-orbit','auto 45deg 4.4m');mv.setAttribute('max-camera-orbit','auto 95deg 7.2m');mv.setAttribute('field-of-view','28deg');mv.setAttribute('camera-target','0m 0m 0m');mv.setAttribute('auto-rotate-delay',IS_LITE?'1200':'800');mv.setAttribute('rotation-per-second',IS_LITE?'8deg':'12deg');mv.setAttribute('interaction-prompt','none')}
 function loadOrbModel(key){const mv=orbModels[key];if(!mv||mv.getAttribute('src'))return;mv.setAttribute('src',ORB_URLS[key]);configureOrbModel(mv);mv.closest('.starr-orb')?.classList.add('has-model')}
 function unloadOrbModels(exceptBtn=null){Object.values(orbModels).forEach(mv=>{const btn=mv?.closest('.starr-orb');if(!mv||btn===exceptBtn)return;mv.removeAttribute('src');btn?.classList.remove('has-model')})}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+function waitForLoad(mv){return new Promise(resolve=>{let done=false;const finish=()=>{if(done)return;done=true;resolve()};mv.addEventListener('load',finish,{once:true});mv.addEventListener('error',finish,{once:true});setTimeout(finish,4500)})}
+async function captureOrbPreview(renderer){await wait(260);try{if(typeof renderer.toDataURL==='function'){const result=renderer.toDataURL('image/png');return typeof result?.then==='function'?await result:result}}catch(e){}try{const canvas=renderer.shadowRoot?.querySelector('canvas');return canvas?.toDataURL('image/png')}catch(e){}return null}
+async function generateOrbPreviews(){if(IS_LITE)return;const keys=['tech','art','plant','seed'];const renderer=document.createElement('model-viewer');renderer.className='orb-preview-renderer';renderer.setAttribute('crossorigin','anonymous');configureOrbModel(renderer);renderer.removeAttribute('auto-rotate');renderer.setAttribute('exposure','1.12');renderer.setAttribute('shadow-intensity','0');document.body.appendChild(renderer);for(const key of keys){const btn=orbModels[key]?.closest('.starr-orb');const img=btn?.querySelector('.orb-preview');if(!img)continue;const cached=sessionStorage.getItem(`orb-preview-${key}`);if(cached){img.src=cached;btn.classList.add('has-preview');continue}renderer.setAttribute('src',ORB_URLS[key]);await waitForLoad(renderer);const data=await captureOrbPreview(renderer);if(data&&data.startsWith('data:image')){try{sessionStorage.setItem(`orb-preview-${key}`,data)}catch(e){}img.src=data;btn.classList.add('has-preview')}renderer.removeAttribute('src');await wait(120)}renderer.remove()}
 
 const sections=[
 ['ai','🤖','AI + Automation','#80f7ff','Custom AI agents, GPTs, workflow automations, and research systems that save time and turn scattered work into repeatable engines.',['Custom GPTs','n8n / Make','Lead systems','AI training'],[['Ịmaya Automation Builds','Lead capture, outreach, CRM cleanup, follow-ups, and virtual assistant workflows for small teams.'],['Custom AI Assistants','Personal or business GPTs trained for a specific workflow, audience, voice, or internal knowledge base.'],['Deep Research Systems','Fast research packages with clear summaries, action plans, and reusable knowledge files.']]],
@@ -59,7 +64,7 @@ const backBtn=document.createElement('button');
 backBtn.className='orb-back';
 backBtn.textContent='Return to AxStarr';
 document.body.appendChild(backBtn);
-if(!IS_LITE){const note=document.createElement('div');note.className='perf-note';note.textContent='Progressive 3D';document.body.appendChild(note);setTimeout(()=>note.remove(),4200)}
+if(!IS_LITE){const note=document.createElement('div');note.className='perf-note';note.textContent='Preview Orbs + 3D on Click';document.body.appendChild(note);setTimeout(()=>note.remove(),5200)}
 
 function renderNav(){nav.innerHTML=sections.map((s,i)=>`<button class="${i===sel?'active':''}" data-i="${i}"><i>${s[1]}</i><span>${s[2]}</span></button>`).join('');nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{closeOrbFocus(false);select(+b.dataset.i,true)}))}
 function select(i,show=true){sel=(i+sections.length)%sections.length;const s=sections[sel];orb.textContent=s[1];orb.style.boxShadow=`0 0 28px ${s[3]}`;title.textContent=s[2];desc.textContent=s[4];chips.innerHTML=s[5].map(c=>`<span class="chip">${c}</span>`).join('');deck.innerHTML=s[6].map((c,idx)=>`<article class="card"><h3>${c[0]}</h3><p>${c[1]}</p></article>`).join('');count.textContent=`${sel+1} / ${sections.length}`;renderNav();if(show){panel.classList.add('show');intro.classList.add('hide')}};
@@ -86,7 +91,7 @@ avatar.setAttribute('auto-rotate-delay',IS_LITE?'1800':'1000');
 avatar.setAttribute('rotation-per-second',IS_LITE?'8deg':'10deg');
 avatar.addEventListener('camera-change',syncOrbitFromAvatar);
 orbitButtons.forEach(btn=>{btn.addEventListener('click',e=>{const target=Number(btn.dataset.target);openOrbFocus(btn,target)})});
-avatar.addEventListener('load',()=>{avatar.classList.add('loaded');status.textContent=IS_LITE?'Mobile Lite Mode':'Progressive 3D Mode'});
+avatar.addEventListener('load',()=>{avatar.classList.add('loaded');status.textContent=IS_LITE?'Mobile Lite Mode':'Preview Orb Mode';setTimeout(generateOrbPreviews,650)});
 avatar.addEventListener('error',()=>{avatar.classList.add('failed');status.textContent='Model Error';modelError.classList.add('show')});
 if(!USE_STATIC_BG){bgVideo.addEventListener('ended',()=>document.body.classList.add('bg-ended'));bgVideo.addEventListener('error',()=>document.body.classList.add('bg-ended'));bgVideo.play().catch(()=>document.body.classList.add('bg-ended'))}
 setTimeout(()=>{if(!avatar.classList.contains('loaded'))status.textContent='Still loading model'},6500);
