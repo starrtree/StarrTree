@@ -10,7 +10,7 @@
 </head>
 <body>
   <div class="media-bg" aria-hidden="true">
-    <video id="bgVideo" class="bg-video" src="assets/starrtree_background_emergence.mp4" muted playsinline autoplay preload="auto"></video>
+    <video id="bgVideo" class="bg-video" src="assets/starrtree_background_emergence.mp4" muted playsinline preload="metadata"></video>
     <img id="bgStill" class="bg-still" src="assets/starrtree_background_final.jpg" alt="" onerror="this.onerror=null;this.src='assets/starrtree_background_final.png'" />
     <div class="media-tint"></div>
   </div>
@@ -65,10 +65,10 @@
   <model-viewer id="avatar3d" class="avatar3d" src="https://res.cloudinary.com/r9c7da2l/image/upload/v1783348509/AxStarr_cloudinary_1024_75_fjkfxo.glb" crossorigin="anonymous" alt="3D AxStarr avatar" camera-orbit="0deg 78deg 4.25m" min-camera-orbit="auto 50deg 2.7m" max-camera-orbit="auto 92deg 7.5m" field-of-view="25deg" exposure="1.08" shadow-intensity=".72" interaction-prompt="none" camera-controls disable-pan auto-rotate auto-rotate-delay="2400" rotation-per-second="14deg" loading="eager"></model-viewer>
 
   <div class="orb-layer" aria-label="StarrTree orbs">
-    <button class="starr-orb orb-tech" data-target="0" aria-label="AI + Automation"><model-viewer class="orb-model" src="https://res.cloudinary.com/r9c7da2l/image/upload/v1783379496/orb-tech_ujuzrl.glb" crossorigin="anonymous" auto-rotate camera-orbit="0deg 75deg 2.4m" field-of-view="24deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>AI</span></button>
-    <button class="starr-orb orb-art" data-target="3" aria-label="Design + Film"><model-viewer class="orb-model" src="https://res.cloudinary.com/r9c7da2l/image/upload/v1783379496/orb-art_yjy3hs.glb" crossorigin="anonymous" auto-rotate camera-orbit="0deg 75deg 2.4m" field-of-view="24deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>Art</span></button>
-    <button class="starr-orb orb-plant" data-target="1" aria-label="Education + Workshops"><model-viewer class="orb-model" src="https://res.cloudinary.com/r9c7da2l/image/upload/v1783379497/orb-plant-bio_t3trul.glb" crossorigin="anonymous" auto-rotate camera-orbit="0deg 75deg 2.4m" field-of-view="24deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>Growth</span></button>
-    <button class="starr-orb orb-seed" data-target="7" aria-label="StarrTree Brand"><model-viewer class="orb-model" src="https://res.cloudinary.com/r9c7da2l/image/upload/v1783379497/orb-seed-of-life_qbjv0a.glb" crossorigin="anonymous" auto-rotate camera-orbit="0deg 75deg 2.4m" field-of-view="24deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>StarrTree</span></button>
+    <button class="starr-orb orb-tech" data-orb="tech" data-target="0" aria-label="AI + Automation"><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>AI</span></button>
+    <button class="starr-orb orb-art" data-orb="art" data-target="3" aria-label="Design + Film"><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>Art</span></button>
+    <button class="starr-orb orb-plant" data-orb="plant" data-target="1" aria-label="Education + Workshops"><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>Growth</span></button>
+    <button class="starr-orb orb-seed" data-orb="seed" data-target="7" aria-label="StarrTree Brand"><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>StarrTree</span></button>
   </div>
 
   <main class="ui">
