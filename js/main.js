@@ -5,6 +5,17 @@ document.head.appendChild(focusStyles);
 
 const avatar=document.getElementById('avatar3d'),nav=document.getElementById('nav'),intro=document.getElementById('intro'),panel=document.getElementById('panel'),orb=document.getElementById('orb'),title=document.getElementById('title'),desc=document.getElementById('desc'),chips=document.getElementById('chips'),deck=document.getElementById('deck'),count=document.getElementById('count'),status=document.getElementById('status'),modelError=document.getElementById('modelError'),bgVideo=document.getElementById('bgVideo');
 
+const ORB_URLS={
+  tech:'https://res.cloudinary.com/r9c7da2l/image/upload/v1783385128/orb-tech-mv_joc0yd.glb',
+  art:'https://res.cloudinary.com/r9c7da2l/image/upload/v1783385128/orb-art-mv_yxdxav.glb',
+  seed:'https://res.cloudinary.com/r9c7da2l/image/upload/v1783385129/orb-seed-of-life-mv_ij6drf.glb',
+  plant:'https://res.cloudinary.com/r9c7da2l/image/upload/v1783385129/orb-plant-bio-mv_fvbz1y.glb'
+};
+document.querySelector('.orb-tech .orb-model')?.setAttribute('src',ORB_URLS.tech);
+document.querySelector('.orb-art .orb-model')?.setAttribute('src',ORB_URLS.art);
+document.querySelector('.orb-seed .orb-model')?.setAttribute('src',ORB_URLS.seed);
+document.querySelector('.orb-plant .orb-model')?.setAttribute('src',ORB_URLS.plant);
+
 const sections=[
 ['ai','🤖','AI + Automation','#80f7ff','Custom AI agents, GPTs, workflow automations, and research systems that save time and turn scattered work into repeatable engines.',['Custom GPTs','n8n / Make','Lead systems','AI training'],[['Ịmaya Automation Builds','Lead capture, outreach, CRM cleanup, follow-ups, and virtual assistant workflows for small teams.'],['Custom AI Assistants','Personal or business GPTs trained for a specific workflow, audience, voice, or internal knowledge base.'],['Deep Research Systems','Fast research packages with clear summaries, action plans, and reusable knowledge files.']]],
 ['education','🎓','Education + Workshops','#72ff9b','AI literacy and creative technology programs for students, schools, youth organizations, and working adults.',['Youth AI','Curriculum','Workshops','Creative learning'],[['Shoot With A Camera','Film, storytelling, and AI media education for youth through hands-on creation.'],['AI Club / School Programs','Prompting, short films, app ideas, responsible AI, and project-based learning.'],['Workflow Training','Practical workshops that help adults and teams use AI without getting lost in tool overload.']]],
