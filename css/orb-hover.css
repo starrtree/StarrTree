@@ -1,0 +1,1 @@
+.orb-model{transition:filter .22s ease,transform .22s ease!important;transform-origin:center center!important}.starr-orb:hover .orb-model{transform:scale(1.1)!important}.starr-orb.is-focused:hover .orb-model{transform:scale(1.02)!important}.starr-orb,.orb-model{border-radius:0!important;overflow:visible!important;clip-path:none!important;background:transparent!important}
