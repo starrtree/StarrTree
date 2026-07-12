@@ -10,72 +10,30 @@
 </head>
 <body>
   <div class="media-bg" aria-hidden="true">
-    <video id="bgVideo" class="bg-video" src="assets/starrtree_background_emergence.mp4" muted playsinline preload="metadata"></video>
+    <video id="bgVideo" class="bg-video" src="assets/starrtree_background_emergence.mp4" muted playsinline autoplay preload="auto"></video>
     <img id="bgStill" class="bg-still" src="assets/starrtree_background_final.jpg" alt="" onerror="this.onerror=null;this.src='assets/starrtree_background_final.png'" />
     <div class="media-tint"></div>
   </div>
   <div class="void" aria-hidden="true"><div class="stars"></div></div>
-
-  <svg class="magnetic-field field-back" viewBox="0 0 1200 820" aria-hidden="true">
-    <defs>
-      <linearGradient id="coreGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7d6"/><stop offset=".48" stop-color="#ffd700"/><stop offset="1" stop-color="#ff8f2d"/></linearGradient>
-      <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6be"/><stop offset=".42" stop-color="#ffd700"/><stop offset="1" stop-color="#ff9a2d"/></linearGradient>
-      <linearGradient id="cyanGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".38" stop-color="#80f7ff"/><stop offset="1" stop-color="#3279ff"/></linearGradient>
-      <linearGradient id="pinkGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".44" stop-color="#ff7adf"/><stop offset="1" stop-color="#8e4dff"/></linearGradient>
-      <linearGradient id="violetGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d2f3ff"/><stop offset=".46" stop-color="#9f8cff"/><stop offset="1" stop-color="#ff5ce8"/></linearGradient>
-      <linearGradient id="rainbowGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff8f2d"/><stop offset=".22" stop-color="#ffd700"/><stop offset=".44" stop-color="#72ff9b"/><stop offset=".66" stop-color="#80f7ff"/><stop offset=".84" stop-color="#9f8cff"/><stop offset="1" stop-color="#ff7adf"/></linearGradient>
-      <filter id="softGlow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <filter id="orbGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    </defs>
-    <path class="glow gold" d="M600 678 C600 586 600 498 600 410 C600 330 600 260 600 168" />
-    <path class="core" d="M600 700 C600 590 600 500 600 410 C600 322 600 255 600 140" />
-    <path class="branch gold" d="M600 354 C508 318 430 250 335 158 C295 118 245 98 186 86" />
-    <path class="branch cyan" d="M600 346 C705 306 780 252 884 154 C930 112 985 96 1048 92" />
-    <path class="branch violet" d="M600 292 C530 242 510 176 468 92 C455 68 432 48 398 38" />
-    <path class="branch pink" d="M600 288 C672 234 700 178 742 94 C756 66 780 48 815 40" />
-    <path class="branch rainbow" d="M600 408 C438 410 318 382 190 314 C126 280 76 280 32 306" />
-    <path class="branch rainbow" d="M600 408 C765 410 888 384 1012 316 C1076 282 1126 280 1168 306" />
-    <path class="branch gold" d="M600 515 C493 558 396 628 300 726 C252 776 190 796 118 782" />
-    <path class="branch pink" d="M600 515 C712 560 806 630 904 726 C954 776 1012 798 1084 784" />
-    <path class="branch cyan" d="M600 606 C528 620 458 676 392 780" />
-    <path class="branch violet" d="M600 606 C672 620 742 676 808 780" />
-    <path class="twig gold" d="M410 232 C365 218 328 210 282 178" />
-    <path class="twig cyan" d="M788 230 C836 212 868 204 922 174" />
-    <path class="twig pink" d="M728 324 C772 304 808 284 842 246" />
-    <path class="twig cyan" d="M462 328 C418 304 386 286 352 248" />
-    <path class="twig gold" d="M318 690 C284 670 258 650 218 626" />
-    <path class="twig pink" d="M884 690 C918 668 946 648 986 626" />
-    <path class="far cyan" d="M600 400 C445 230 296 170 110 180" />
-    <path class="far pink" d="M600 400 C760 230 908 170 1090 180" />
-    <path class="far gold" d="M600 424 C420 565 286 638 110 650" />
-    <path class="far violet" d="M600 424 C780 565 914 638 1090 650" />
-    <circle cx="186" cy="86" r="12" fill="#ffd700"/><circle cx="1048" cy="92" r="11" fill="#80f7ff"/><circle cx="398" cy="38" r="8" fill="#ff7adf"/><circle cx="815" cy="40" r="8" fill="#9f8cff"/><circle cx="32" cy="306" r="15" fill="#ffb84d"/><circle cx="1168" cy="306" r="14" fill="#ffd700"/><circle cx="118" cy="782" r="9" fill="#80f7ff"/><circle cx="1084" cy="784" r="9" fill="#ff7adf"/><circle class="node-small" cx="842" cy="246" r="6" fill="#72ff9b"/><circle class="node-small" cx="352" cy="248" r="6" fill="#80f7ff"/>
-  </svg>
-
-  <svg class="magnetic-field field-front" viewBox="0 0 1200 820" aria-hidden="true">
-    <path class="branch gold" d="M600 402 C526 374 452 392 370 430 C302 462 244 462 188 438" />
-    <path class="branch cyan" d="M600 402 C674 374 748 392 830 430 C898 462 956 462 1012 438" />
-    <path class="twig rainbow" d="M600 505 C538 530 484 560 442 612" />
-    <path class="twig rainbow" d="M600 505 C662 530 716 560 758 612" />
-    <path class="twig gold" d="M600 318 C562 292 530 266 505 228" />
-    <path class="twig pink" d="M600 318 C638 292 670 266 695 228" />
-  </svg>
-
   <div class="birth-light" aria-hidden="true"></div>
-  <model-viewer id="avatar3d" class="avatar3d" src="https://res.cloudinary.com/r9c7da2l/image/upload/v1783348509/AxStarr_cloudinary_1024_75_fjkfxo.glb" crossorigin="anonymous" alt="3D AxStarr avatar" camera-orbit="0deg 78deg 4.25m" min-camera-orbit="auto 50deg 2.7m" max-camera-orbit="auto 92deg 7.5m" field-of-view="25deg" exposure="1.08" shadow-intensity=".72" interaction-prompt="none" camera-controls disable-pan auto-rotate auto-rotate-delay="2400" rotation-per-second="14deg" loading="eager"></model-viewer>
 
-  <div class="orb-layer" aria-label="StarrTree orbs">
-    <button class="starr-orb orb-tech" data-orb="tech" data-target="0" aria-label="AI + Automation"><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>AI</span></button>
-    <button class="starr-orb orb-art" data-orb="art" data-target="3" aria-label="Design + Film"><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>Art</span></button>
-    <button class="starr-orb orb-plant" data-orb="plant" data-target="1" aria-label="Education + Workshops"><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>Growth</span></button>
-    <button class="starr-orb orb-seed" data-orb="seed" data-target="7" aria-label="StarrTree Brand"><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>StarrTree</span></button>
+  <div id="orbBackLayer" class="orb-layer orb-back-layer" aria-hidden="false"></div>
+
+  <model-viewer id="avatar3d" class="avatar3d" src="https://res.cloudinary.com/r9c7da2l/image/upload/v1783348509/AxStarr_cloudinary_1024_75_fjkfxo.glb" crossorigin="anonymous" alt="3D AxStarr avatar" camera-orbit="0deg 78deg 8.2m" min-camera-orbit="auto 50deg 6.4m" max-camera-orbit="auto 92deg 13m" field-of-view="22deg" exposure="1.08" shadow-intensity=".72" interaction-prompt="none" auto-rotate auto-rotate-delay="1200" rotation-per-second="10deg" loading="eager"></model-viewer>
+  <div id="avatarControls" class="avatar-controls" role="application" aria-label="Drag to orbit AxStarr and scroll to zoom"></div>
+
+  <div id="orbFrontLayer" class="orb-layer orb-front-layer" aria-label="StarrTree orbs">
+    <button type="button" class="starr-orb orb-tech" data-orb="tech" data-target="0" aria-label="AI + Automation"><span class="mobile-geometry" aria-hidden="true"></span><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>AI</span></button>
+    <button type="button" class="starr-orb orb-art" data-orb="art" data-target="3" aria-label="Design + Film"><span class="mobile-geometry" aria-hidden="true"></span><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>Art</span></button>
+    <button type="button" class="starr-orb orb-plant" data-orb="plant" data-target="1" aria-label="Education + Workshops"><span class="mobile-geometry" aria-hidden="true"></span><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>Growth</span></button>
+    <button type="button" class="starr-orb orb-seed" data-orb="seed" data-target="7" aria-label="StarrTree Brand"><span class="mobile-geometry" aria-hidden="true"></span><model-viewer class="orb-model" crossorigin="anonymous" camera-orbit="0deg 75deg 5.2m" field-of-view="28deg" exposure="1.12" shadow-intensity="0" interaction-prompt="none" loading="lazy"></model-viewer><span>StarrTree</span></button>
   </div>
 
   <main class="ui">
     <header class="top"><div class="brand" id="brand" role="button" tabindex="0"><b>Max Starr</b><span>StarrTree · Rooted in Light</span></div><div class="status" id="status">Loading AxStarr</div></header>
     <nav class="nav" id="nav" aria-label="StarrTree sections"></nav>
-    <section class="intro" id="intro"><h1>StarrTree Interface</h1><p>A lightweight 3D cosmic hub for the music, AI, education, design, engineering, products, and startup work branching from one center.</p><div class="actions"><button id="explore">Explore Nodes</button><a class="btn" href="mailto:max@thestarrter.com?subject=StarrTree%20Inquiry">Start Inquiry</a></div></section>
-    <p class="control-hint">Drag to orbit · scroll/pinch to zoom</p>
+    <section class="intro" id="intro"><h1>StarrTree Interface</h1><p>A 3D cosmic hub for the music, AI, education, design, engineering, products, and startup work branching from one center.</p><div class="actions"><button id="explore">Explore Nodes</button><a class="btn" href="mailto:max@thestarrter.com?subject=StarrTree%20Inquiry">Start Inquiry</a></div></section>
+    <p class="control-hint">Drag AxStarr to orbit · scroll/pinch to zoom · tap an orb to enter</p>
     <aside class="panel" id="panel" aria-live="polite"><div class="head"><div class="orb" id="orb">🤖</div><div><p class="kicker">Selected StarrNode</p><h2 class="title" id="title">AI + Automation</h2></div></div><div class="body"><p class="desc" id="desc"></p><div class="chips" id="chips"></div><div class="deck" id="deck"></div></div><div class="ctrl"><button id="prev">Prev</button><span class="count" id="count">1 / 8</span><button id="next">Next</button></div></aside>
     <aside class="model-error" id="modelError"><b>AxStarr model did not load.</b><br />Check the Cloudinary GLB URL or CORS settings.</aside>
   </main>
